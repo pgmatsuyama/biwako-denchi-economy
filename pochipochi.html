@@ -39,7 +39,7 @@
     </table>
     <br>
     <button type="submit">シミュレーション実行</button>
-   </form>
+  </form>
 
   <canvas id="profitChart"></canvas>
 
@@ -86,11 +86,7 @@
         document.getElementById(`slot${i}`).value = action;
       }
     }
-function formatProfit(yen) {
-  return yen >= 1e8 ? `¥${(yen / 1e8).toFixed(2)} 億円` :
-         yen >= 1e4 ? `¥${(yen / 1e4).toFixed(1)} 万円` :
-         `¥${yen.toLocaleString()} 円`;
-}
+
     document.getElementById("strategyForm").addEventListener("submit", e => {
       e.preventDefault();
       const form = new FormData(e.target);
@@ -117,7 +113,7 @@ function formatProfit(yen) {
           labels: labels,
           datasets: [{
             label: "損益 (円)",
-            data: formatProfit(profits.map(v => Math.round(v))),
+            data: profits.map(v => Math.round(v)),
             backgroundColor: profits.map(v => v >= 0 ? 'red' : 'blue')
           }]
         },
