@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>週間戦略シミュレーター（実価格連動）</title>
+  <title>週間戦略シミュレーター（実価格連動・正規計算）</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: sans-serif; padding: 1em; }
@@ -17,7 +17,7 @@
   </style>
 </head>
 <body>
-  <h1>週間戦略シミュレーター（実価格連動）</h1>
+  <h1>週間戦略シミュレーター（実価格連動・正規計算）</h1>
   <div class="controls">
     <input type="date" id="startDate" value="2024-04-01" />
     <button onclick="setAll('pumped')">揚水</button>
@@ -35,10 +35,12 @@
   </div>
 
   <script>
-    const ENERGY_PER_SLOT = 1.0;
+    const ENERGY_PER_SLOT = 1.0; // GWh
     const PUMP_EFFICIENCY = 0.7;
     const GENERATE_EFFICIENCY = 0.9;
     const PRICE_DATA_URL = "data/spot_price_kansai_2024_2025.json";
+    const KWH_PER_GWH = 1000000;
+    const SLOT_HOURS = 0.5;
 
     const days = ["月", "火", "水", "木", "金", "土", "日"];
     const states = ["idle", "pumped", "generated"];
@@ -133,11 +135,11 @@
           const price = priceList[d * 48 + h] || 0;
           let delta = 0;
           if (s === "pumped") {
-            delta = -price / PUMP_EFFICIENCY * ENERGY_PER_SLOT;
+            delta = -price / PUMP_EFFICIENCY * ENERGY_PER_SLOT * KWH_PER_GWH * SLOT_HOURS;
             volume += ENERGY_PER_SLOT;
           }
           if (s === "generated") {
-            delta = price * GENERATE_EFFICIENCY * ENERGY_PER_SLOT;
+            delta = price * GENERATE_EFFICIENCY * ENERGY_PER_SLOT * KWH_PER_GWH * SLOT_HOURS;
             volume -= ENERGY_PER_SLOT;
           }
           total += delta;
