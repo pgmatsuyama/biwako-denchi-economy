@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ダム位置エネルギー計算機</title>
+  <style>
+    body { font-family: sans-serif; line-height: 1.6; padding: 20px; }
+    input { width: 100px; margin: 5px; }
+    .output { font-weight: bold; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>ダムの容積・位置エネルギー計算</h2>
+
+  <label>縦（m）：<input type="number" id="length"  value="500" step="0.1"></label><br>
+  <label>横（m）：<input type="number" id="width"  value="500" step="0.1"></label><br>
+  <label>深さ（m）：<input type="number" id="depth"  value="78" step="0.1"></label><br>
+  <label>有効高さ（m）：<input type="number" id="effectiveHeight"  value="300" step="0.1"></label><br>
+
+  <button onclick="calculate()">計算する</button>
+
+  <div class="output" id="volumeResult">容積（トン）：</div>
+  <div class="output" id="suiisaResult">びわ湖の水位変動（mm）：</div>
+  <div class="output" id="energyResult">位置エネルギー（GWh）：</div>
+
+  <script>
+    function formatNumber(value, digits = 2) {
+      return value.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    }
+
+    function calculate() {
+      const length = parseFloat(document.getElementById('length').value) || 0;
+      const width = parseFloat(document.getElementById('width').value) || 0;
+      const depth = parseFloat(document.getElementById('depth').value) || 0;
+      const height = parseFloat(document.getElementById('effectiveHeight').value) || 0;
+
+      const volume = length * width * depth; // m³
+      const massTons = volume; // 1m³ = 1トン
+      const energyJoules = massTons * 1000 * 9.8 * height;
+      const suiisa = volume /670000; //びわ湖面積
+      const energyGWh = energyJoules / 3.6e12;
+console.log("length:", length);
+console.log("width:", width);
+console.log("depth:", depth);
+console.log("height:", height);
+console.log("massTons:", massTons);
+console.log("volume:", volume);
+console.log("massTons:", massTons);
+console.log("Joules:", energyJoules);
+console.log("GWh:", energyGWh);
+
+      document.getElementById('volumeResult').textContent = "容積（トン）： " + formatNumber(massTons, 0) + " トン";
+      document.getElementById('suiisaResult').textContent = "びわ湖の水位変動（mm）： " + formatNumber(suiisa, 3) + " mm";
+      document.getElementById('energyResult').textContent = "位置エネルギー（GWh）： " + formatNumber(energyGWh, 3) + " GWh";
+    }
+  </script>
+</body>
+</html>
