@@ -65,7 +65,16 @@
             options: {
               responsive: true,
               scales: {
-                y: {
+                x: {
+                  ticks: {
+                    maxRotation: 0,
+                autoSkip: true
+            　　　},
+    　　　　　　　afterDataLimits(scale) {
+      　　　　　　scale.max += 1; // ← X軸に1スロット（30分）分の余白を作る
+    　　　　　　　}
+  　　　　　　　},
+          y: {
                   beginAtZero: true
                 }
               }
