@@ -2,132 +2,66 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>関西スポット価格グラフ</title>
-
+  <title>日付選択チャート - 関西スポット価格</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 2em; background: #f0f8ff; }
-    canvas { max-width: 100%; height: auto; }
-    select { margin-bottom: 1em; padding: 0.3em; font-size: 1em; }
-    .btn {
-      display: inline-block;
-      margin-top: 2em;
-      padding: 1em 2em;
-      background: #00796b;
-      color: white;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-    }
-
+    body { font-family: sans-serif; background: #f0f8ff; padding: 2rem; }
+    h1 { font-size: 1.5em; margin-bottom: 1em; }
+    input[type="date"] { font-size: 1em; padding: 0.3em; }
+    canvas { max-width: 100%; height: auto; margin-top: 2em; }
   </style>
 </head>
 <body>
-  <h1>関西スポット価格（30分刻み）</h1>
-  <label for="dateSelect">日付を選択：</label>
-  <select id="dateSelect"></select>
-  <canvas id="priceChart"></canvas>
+  <h1>関西スポット価格（2024–2025）</h1>
+  <label for="datePicker">日付を選んでください：</label>
+  <input type="date" id="datePicker">
+
+  <canvas id="chart"></canvas>
 
   <script>
-    const csvData = `date,time,price_kansai
-2025/04/01,0:00,11.00
-2025/04/01,0:30,11.00
-2025/04/01,1:00,10.87
-2025/04/01,1:30,10.87
-2025/04/01,2:00,11.27
-2025/04/01,2:30,11.55
-2025/04/01,3:00,11.71
-2025/04/01,3:30,11.71
-2025/04/01,4:00,11.71
-2025/04/01,4:30,11.71
-2025/04/01,5:00,11.71
-2025/04/01,5:30,11.71
-2025/04/01,6:00,11.71
-2025/04/01,6:30,11.71
-2025/04/01,7:00,11.71
-2025/04/01,7:30,11.71
-2025/04/01,8:00,11.71
-2025/04/01,8:30,11.71
-2025/04/01,9:00,11.71
-2025/04/01,9:30,11.71
-2025/04/01,10:00,11.71
-2025/04/01,10:30,11.71
-2025/04/01,11:00,11.71
-2025/04/01,11:30,11.71
-2025/04/01,12:00,11.71
-2025/04/01,12:30,11.71
-2025/04/01,13:00,11.71
-2025/04/01,13:30,11.71
-2025/04/01,14:00,11.71
-2025/04/01,14:30,11.71
-2025/04/01,15:00,11.71
-2025/04/01,15:30,11.71
-2025/04/01,16:00,11.71
-2025/04/01,16:30,11.71
-2025/04/01,17:00,11.71
-2025/04/01,17:30,11.71
-2025/04/01,18:00,11.71
-2025/04/01,18:30,11.71
-2025/04/01,19:00,11.71
-2025/04/01,19:30,11.71
-2025/04/01,20:00,11.71
-2025/04/01,20:30,11.71
-2025/04/01,21:00,11.71
-2025/04/01,21:30,11.71
-2025/04/01,22:00,11.71
-2025/04/01,22:30,11.71
-2025/04/01,23:00,11.71
-2025/04/01,23:30,11.71`;
-
-    const lines = csvData.trim().split("\n").slice(1);
-    const dataByDate = {};
-    for (const line of lines) {
-      const [date, time, price] = line.split(',');
-      if (!dataByDate[date]) dataByDate[date] = [];
-      dataByDate[date].push({ time, price: parseFloat(price) });
-    }
-
-    const select = document.getElementById("dateSelect");
-    Object.keys(dataByDate).forEach(date => {
-      const option = document.createElement("option");
-      option.value = date;
-      option.textContent = date;
-      select.appendChild(option);
-    });
-
-    const ctx = document.getElementById("priceChart").getContext("2d");
     let chart;
 
-    function updateChart(date) {
-      const dayData = dataByDate[date];
-      const labels = dayData.map(d => d.time);
-      const values = dayData.map(d => d.price);
+    fetch("data/spot_price_kansai_2024_2025.json")
+      .then(response => response.json())
+      .then(data => {
+        const datePicker = document.getElementById("datePicker");
 
-      if (chart) chart.destroy();
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: `${date} 関西スポット価格 (円/kWh)`,
-            data: values,
-            borderColor: 'blue',
-            fill: false
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true }
+        datePicker.addEventListener("change", () => {
+          const selectedDate = datePicker.value.replace(/-/g, "/");
+          const dayData = data[selectedDate];
+
+          if (!dayData) {
+            alert("データがありません");
+            return;
           }
-        }
+
+          const labels = dayData.map(d => d.time);
+          const values = dayData.map(d => d.price);
+
+          if (chart) chart.destroy();
+          const ctx = document.getElementById("chart").getContext("2d");
+          chart = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: labels,
+              datasets: [{
+                label: `${selectedDate} 関西スポット価格 (円/kWh)`,
+                data: values,
+                borderColor: "blue",
+                fill: false
+              }]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true
+                }
+              }
+            }
+          });
+        });
       });
-    }
-
-    select.addEventListener("change", e => updateChart(e.target.value));
-    updateChart(select.value);
   </script>
-        <a class="btn" href="index.html">戻る →</a>
-
 </body>
 </html>
