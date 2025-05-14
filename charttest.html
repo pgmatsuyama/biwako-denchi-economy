@@ -8,7 +8,12 @@
     body { font-family: sans-serif; background: #f0f8ff; padding: 2rem; }
     h1 { font-size: 1.5em; margin-bottom: 1em; }
     input[type="date"] { font-size: 1em; padding: 0.3em; }
-    canvas { max-width: 100%; height: auto; margin-top: 2em; }
+
+canvas {
+  max-width: 100%;
+  height: 400px; /* ← ここで縦の高さを調整できます */
+  margin-top: 2em;
+}
   </style>
 </head>
 <body>
@@ -63,5 +68,7 @@
         });
       });
   </script>
+          <a class="btn" href="index.html">戻る →</a>
+
 </body>
 </html>
