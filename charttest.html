@@ -19,7 +19,7 @@ canvas {
 <body>
   <h1>関西スポット価格（2024–2025）</h1>
   <label for="datePicker">日付を選んでください：</label>
-  <input type="date" id="datePicker">
+  <input type="date" id="datePicker" value="2025-04-01">>
 
   <canvas id="chart"></canvas>
 
@@ -30,8 +30,8 @@ canvas {
       .then(response => response.json())
       .then(data => {
         const datePicker = document.getElementById("datePicker");
-
         datePicker.addEventListener("change", () => {
+datePicker.dispatchEvent(new Event("change"));　 /* ← 100%; */
           const selectedDate = datePicker.value.replace(/-/g, "/");
           const dayData = data[selectedDate];
 
