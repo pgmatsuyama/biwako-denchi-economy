@@ -3,11 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <title>関西スポット価格グラフ</title>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: sans-serif; padding: 2em; background: #f0f8ff; }
     canvas { max-width: 100%; height: auto; }
     select { margin-bottom: 1em; padding: 0.3em; font-size: 1em; }
+    .btn {
+      display: inline-block;
+      margin-top: 2em;
+      padding: 1em 2em;
+      background: #00796b;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
   </style>
 </head>
 <body>
@@ -115,5 +127,7 @@
     select.addEventListener("change", e => updateChart(e.target.value));
     updateChart(select.value);
   </script>
+        <a class="btn" href="index.html">戻る →</a>
+
 </body>
 </html>
