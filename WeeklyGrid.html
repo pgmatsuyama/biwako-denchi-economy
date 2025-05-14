@@ -42,17 +42,27 @@
     const KWH_PER_GWH = 1000000;
     const SLOT_HOURS = 0.5;
 
-    const days = ["月", "火", "水", "木", "金", "土", "日"];
-    const states = ["idle", "pumped", "generated"];
     let strategy = Array(7).fill().map(() => Array(48).fill("idle"));
     let priceData = {};
     let profitChart;
     let waterChart;
     let startingCapital = parseFloat(localStorage.getItem("bankedMoney")) || 0;
 
+    function getDynamicWeekdays(baseDateStr) {
+      const baseDate = new Date(baseDateStr);
+      return [...Array(7)].map((_, i) => {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + i);
+        return "日月火水木金土"[d.getDay()];
+      });
+    }
+
     function createGrid() {
       const container = document.getElementById("week-grid");
       container.innerHTML = '';
+      const baseDateStr = document.getElementById("startDate").value;
+      const days = getDynamicWeekdays(baseDateStr);
+
       days.forEach((day, d) => {
         const label = document.createElement("div");
         label.textContent = day;
@@ -75,7 +85,7 @@
       const d = +cell.dataset.day;
       const h = +cell.dataset.hour;
       const current = strategy[d][h];
-      const next = states[(states.indexOf(current) + 1) % states.length];
+      const next = ["idle", "pumped", "generated"][( ["idle", "pumped", "generated"].indexOf(current) + 1 ) % 3];
       strategy[d][h] = next;
       cell.className = "slot " + next;
     }
@@ -108,7 +118,7 @@
     function bankMoney() {
       const lastTotal = window.lastSimulatedTotal || 0;
       localStorage.setItem("bankedMoney", lastTotal);
-      alert(`\u8ca2\u91d1\u3057\u307e\u3057\u305f\uff01 ${lastTotal.toLocaleString()} \u5186\u3092\u91d1\u5eab\u306b\u4fdd\u7ba1\u3057\u307e\u3057\u305f\u3002`);
+      alert(`貯金しました！ ${lastTotal.toLocaleString()} 円を金庫に保存しました。`);
     }
 
     async function runSimulation() {
