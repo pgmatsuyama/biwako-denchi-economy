@@ -30,8 +30,8 @@ canvas {
       .then(response => response.json())
       .then(data => {
         const datePicker = document.getElementById("datePicker");
-        datePicker.addEventListener("change", () => {
 datePicker.dispatchEvent(new Event("change"));　 /* ← 100%; */
+        datePicker.addEventListener("change", () => {
           const selectedDate = datePicker.value.replace(/-/g, "/");
           const dayData = data[selectedDate];
 
