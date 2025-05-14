@@ -13,6 +13,7 @@
     .idle { background-color: #ccc; }
     .controls { margin-bottom: 1em; }
     #chart-container { width: 100%; max-width: 800px; margin-top: 2em; }
+    canvas { margin-bottom: 2em; }
   </style>
 </head>
 <body>
@@ -24,11 +25,13 @@
     <button onclick="setAll('idle')">休止</button>
     <button onclick="saveStrategy()">戦略保存</button>
     <button onclick="loadStrategy()">戦略復元</button>
+    <button onclick="bankMoney()">貯金</button>
     <button onclick="runSimulation()">シミュレーション実行</button>
   </div>
   <div id="week-grid"></div>
   <div id="chart-container">
     <canvas id="profitChart"></canvas>
+    <canvas id="waterChart"></canvas>
   </div>
 
   <script>
@@ -42,6 +45,8 @@
     let strategy = Array(7).fill().map(() => Array(48).fill("idle"));
     let priceData = {};
     let profitChart;
+    let waterChart;
+    let startingCapital = parseFloat(localStorage.getItem("bankedMoney")) || 0;
 
     function createGrid() {
       const container = document.getElementById("week-grid");
@@ -98,6 +103,12 @@
       }
     }
 
+    function bankMoney() {
+      const lastTotal = window.lastSimulatedTotal || 0;
+      localStorage.setItem("bankedMoney", lastTotal);
+      alert(`\u8ca2\u91d1\u3057\u307e\u3057\u305f\uff01 ${lastTotal.toLocaleString()} \u5186\u3092\u91d1\u5eab\u306b\u4fdd\u7ba1\u3057\u307e\u3057\u305f\u3002`);
+    }
+
     async function runSimulation() {
       const start = new Date(document.getElementById("startDate").value);
       const priceList = [];
@@ -113,40 +124,71 @@
       }
 
       const data = [];
-      let total = 0;
+      const water = [];
+      let total = startingCapital;
+      let volume = 0;
       for (let d = 0; d < 7; d++) {
         for (let h = 0; h < 48; h++) {
           const s = strategy[d][h];
           const price = priceList[d * 48 + h] || 0;
           let delta = 0;
-          if (s === "pumped") delta = -price / PUMP_EFFICIENCY * ENERGY_PER_SLOT;
-          if (s === "generated") delta = price * GENERATE_EFFICIENCY * ENERGY_PER_SLOT;
+          if (s === "pumped") {
+            delta = -price / PUMP_EFFICIENCY * ENERGY_PER_SLOT;
+            volume += ENERGY_PER_SLOT;
+          }
+          if (s === "generated") {
+            delta = price * GENERATE_EFFICIENCY * ENERGY_PER_SLOT;
+            volume -= ENERGY_PER_SLOT;
+          }
           total += delta;
           data.push(total / 10000);
+          water.push(Math.max(0, volume));
         }
       }
-      showChart(data);
+      window.lastSimulatedTotal = total;
+      showCharts(data, water);
     }
 
-    function showChart(data) {
-      const ctx = document.getElementById("profitChart").getContext("2d");
+    function showCharts(data, water) {
+      const ctx1 = document.getElementById("profitChart").getContext("2d");
+      const ctx2 = document.getElementById("waterChart").getContext("2d");
       if (profitChart) profitChart.destroy();
-      profitChart = new Chart(ctx, {
+      if (waterChart) waterChart.destroy();
+      profitChart = new Chart(ctx1, {
         type: 'line',
         data: {
           labels: Array.from({ length: data.length }, (_, i) => i),
           datasets: [{
             label: '資産（万円）',
             data,
-            fill: false,
             borderColor: 'green',
-            tension: 0.1
+            tension: 0.1,
+            fill: false
           }]
         },
         options: {
           scales: {
-            x: { title: { display: true, text: "時間スロット (30分単位×7日間)" } },
+            x: { title: { display: true, text: "時間スロット" } },
             y: { title: { display: true, text: "累積資産 (万円)" } }
+          }
+        }
+      });
+      waterChart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+          labels: Array.from({ length: water.length }, (_, i) => i),
+          datasets: [{
+            label: '上池水量（GWh）',
+            data: water,
+            borderColor: 'blue',
+            tension: 0.1,
+            fill: false
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: "時間スロット" } },
+            y: { title: { display: true, text: "水量 (GWh)" } }
           }
         }
       });
