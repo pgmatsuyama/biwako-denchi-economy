@@ -54,7 +54,7 @@
           chart = new Chart(ctx, {
             type: "line",
             data: {
-              labels: labels,
+        const labels = [...dayData.map(d => d.time), "24:00"];
               datasets: [{
                 label: `${selectedDate} 関西スポット価格 (円/kWh)`,
                 data: values,
