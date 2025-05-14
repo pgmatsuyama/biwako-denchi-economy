@@ -29,7 +29,6 @@ canvas {
     fetch("data/spot_price_kansai_2024_2025.json")
       .then(response => response.json())
       .then(data => {
-datePicker.dispatchEvent(new Event("change"));　 /* ← 100%; */
         const datePicker = document.getElementById("datePicker");
 
         datePicker.addEventListener("change", () => {
@@ -67,6 +66,8 @@ datePicker.dispatchEvent(new Event("change"));　 /* ← 100%; */
             }
           });
         });
+        datePicker.dispatchEvent(new Event("change"));　 /* ← 100%; */
+
       });
   </script>
           <a class="btn" href="index.html">戻る →</a>
