@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>週間戦略シミュレーター（実価格連動）</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1em; }
+    .grid { display: grid; grid-template-columns: repeat(48, 16px); gap: 2px; margin-bottom: 1em; }
+    .slot { width: 16px; height: 16px; border: 1px solid #ccc; cursor: pointer; }
+    .pumped { background-color: #66f; }
+    .generated { background-color: #f66; }
+    .idle { background-color: #ccc; }
+    .controls { margin-bottom: 1em; }
+    #chart-container { width: 100%; max-width: 800px; margin-top: 2em; }
+  </style>
+</head>
+<body>
+  <h1>週間戦略シミュレーター（実価格連動）</h1>
+  <div class="controls">
+    <input type="date" id="startDate" value="2024-04-01" />
+    <button onclick="setAll('pumped')">揚水</button>
+    <button onclick="setAll('generated')">発電</button>
+    <button onclick="setAll('idle')">休止</button>
+    <button onclick="saveStrategy()">戦略保存</button>
+    <button onclick="loadStrategy()">戦略復元</button>
+    <button onclick="runSimulation()">シミュレーション実行</button>
+  </div>
+  <div id="week-grid"></div>
+  <div id="chart-container">
+    <canvas id="profitChart"></canvas>
+  </div>
+
+  <script>
+    const ENERGY_PER_SLOT = 1.0;
+    const PUMP_EFFICIENCY = 0.7;
+    const GENERATE_EFFICIENCY = 0.9;
+    const PRICE_DATA_URL = "data/spot_price_kansai_2024_2025.json";
+
+    const days = ["月", "火", "水", "木", "金", "土", "日"];
+    const states = ["idle", "pumped", "generated"];
+    let strategy = Array(7).fill().map(() => Array(48).fill("idle"));
+    let priceData = {};
+    let profitChart;
+
+    function createGrid() {
+      const container = document.getElementById("week-grid");
+      container.innerHTML = '';
+      days.forEach((day, d) => {
+        const label = document.createElement("div");
+        label.textContent = day;
+        container.appendChild(label);
+        const row = document.createElement("div");
+        row.className = "grid";
+        for (let h = 0; h < 48; h++) {
+          const cell = document.createElement("div");
+          cell.className = "slot " + strategy[d][h];
+          cell.dataset.day = d;
+          cell.dataset.hour = h;
+          cell.onclick = () => toggleState(cell);
+          row.appendChild(cell);
+        }
+        container.appendChild(row);
+      });
+    }
+
+    function toggleState(cell) {
+      const d = +cell.dataset.day;
+      const h = +cell.dataset.hour;
+      const current = strategy[d][h];
+      const next = states[(states.indexOf(current) + 1) % states.length];
+      strategy[d][h] = next;
+      cell.className = "slot " + next;
+    }
+
+    function setAll(state) {
+      document.querySelectorAll(".slot").forEach(cell => {
+        cell.className = "slot " + state;
+        const d = +cell.dataset.day;
+        const h = +cell.dataset.hour;
+        strategy[d][h] = state;
+      });
+    }
+
+    function saveStrategy() {
+      localStorage.setItem("weeklyStrategy", JSON.stringify(strategy));
+      alert("戦略を保存しました。");
+    }
+
+    function loadStrategy() {
+      const saved = localStorage.getItem("weeklyStrategy");
+      if (saved) {
+        strategy = JSON.parse(saved);
+        createGrid();
+        alert("戦略を復元しました。");
+      } else {
+        alert("保存された戦略が見つかりません。");
+      }
+    }
+
+    async function runSimulation() {
+      const start = new Date(document.getElementById("startDate").value);
+      const priceList = [];
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        const y = date.getFullYear();
+        const m = ('0' + (date.getMonth() + 1)).slice(-2);
+        const d = ('0' + date.getDate()).slice(-2);
+        const key = `${y}/${m}/${d}`;
+        const dayPrices = priceData[key] || Array(48).fill({ price: 10 });
+        priceList.push(...dayPrices.map(p => p.price));
+      }
+
+      const data = [];
+      let total = 0;
+      for (let d = 0; d < 7; d++) {
+        for (let h = 0; h < 48; h++) {
+          const s = strategy[d][h];
+          const price = priceList[d * 48 + h] || 0;
+          let delta = 0;
+          if (s === "pumped") delta = -price / PUMP_EFFICIENCY * ENERGY_PER_SLOT;
+          if (s === "generated") delta = price * GENERATE_EFFICIENCY * ENERGY_PER_SLOT;
+          total += delta;
+          data.push(total / 10000);
+        }
+      }
+      showChart(data);
+    }
+
+    function showChart(data) {
+      const ctx = document.getElementById("profitChart").getContext("2d");
+      if (profitChart) profitChart.destroy();
+      profitChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: Array.from({ length: data.length }, (_, i) => i),
+          datasets: [{
+            label: '資産（万円）',
+            data,
+            fill: false,
+            borderColor: 'green',
+            tension: 0.1
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: "時間スロット (30分単位×7日間)" } },
+            y: { title: { display: true, text: "累積資産 (万円)" } }
+          }
+        }
+      });
+    }
+
+    async function loadPriceData() {
+      const res = await fetch(PRICE_DATA_URL);
+      priceData = await res.json();
+    }
+
+    loadPriceData().then(() => {
+      createGrid();
+    });
+  </script>
+</body>
+</html>
