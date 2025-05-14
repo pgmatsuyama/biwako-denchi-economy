@@ -2,42 +2,43 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>週間戦略シミュレーター（実価格連動・正規計算）</title>
+  <title>びわ湖電池シミュレーター</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 1em; }
+    body { font-family: sans-serif; padding: 1em; background: #fff; }
     .grid { display: grid; grid-template-columns: repeat(48, 16px); gap: 2px; margin-bottom: 1em; }
     .slot { width: 16px; height: 16px; border: 1px solid #ccc; cursor: pointer; }
     .pumped { background-color: #66f; }
     .generated { background-color: #f66; }
     .idle { background-color: #ccc; }
     .controls { margin-bottom: 1em; }
-    #price-indicator-bar {
+    #price-indicator-bar, .price-day-bar {
       display: grid;
       grid-template-columns: repeat(48, 1fr);
-      height: 8px;
-      margin: 6px 0;
+      height: 6px;
+      margin: 4px 0;
     }
-    #price-indicator-bar div {
+    #price-indicator-bar div, .price-day-bar div {
       height: 100%;
     }
     #chart-container { width: 100%; max-width: 800px; margin-top: 2em; }
     canvas { margin-bottom: 2em; }
+    button { font-size: 1em; margin-right: 4px; padding: 4px 8px; }
   </style>
 </head>
 <body>
-  <h1>週間戦略シミュレーター（実価格連動・正規計算）</h1>
+  <h1>びわ湖電池シミュレーター</h1>
   <div class="controls">
     <input type="date" id="startDate" value="2024-04-01" />
-    <button onclick="setAll('pumped')">揚水</button>
-    <button onclick="setAll('generated')">発電</button>
-    <button onclick="setAll('idle')">休止</button>
-    <button onclick="saveStrategy()">戦略保存</button>
-    <button onclick="loadStrategy()">戦略復元</button>
-    <button onclick="bankMoney()">貯金</button>
-    <button onclick="runSimulation()">シミュレーション実行</button>
-    <div id="price-indicator-bar"></div>
+    <button onclick="setAll('pumped')">💧 揚水</button>
+    <button onclick="setAll('generated')">⚡ 発電</button>
+    <button onclick="setAll('idle')">🛌 休止</button>
+    <button onclick="saveStrategy()">💾 戦略保存</button>
+    <button onclick="loadStrategy()">📂 戦略復元</button>
+    <button onclick="bankMoney()">💰 貯金</button>
+    <button onclick="runSimulation()">▶️ 実行</button>
   </div>
+  <div id="price-indicator-bar"></div>
   <div id="week-grid"></div>
   <div id="chart-container">
     <canvas id="profitChart"></canvas>
@@ -45,7 +46,7 @@
   </div>
 
   <script>
-    const ENERGY_PER_SLOT = 1.0; // GWh
+    const ENERGY_PER_SLOT = 1.0;
     const PUMP_EFFICIENCY = 0.7;
     const GENERATE_EFFICIENCY = 0.9;
     const PRICE_DATA_URL = "data/spot_price_kansai_2024_2025.json";
@@ -77,6 +78,10 @@
         const label = document.createElement("div");
         label.textContent = day;
         container.appendChild(label);
+        const bar = document.createElement("div");
+        bar.className = "price-day-bar";
+        bar.id = `price-day-${d}`;
+        container.appendChild(bar);
         const row = document.createElement("div");
         row.className = "grid";
         for (let h = 0; h < 48; h++) {
@@ -131,18 +136,21 @@
       alert(`貯金しました！ ${lastTotal.toLocaleString()} 円を金庫に保存しました。`);
     }
 
-    function renderPriceIndicator(prices) {
-      const min = Math.min(...prices);
-      const max = Math.max(...prices);
-      const bar = document.getElementById("price-indicator-bar");
-      bar.innerHTML = "";
-      prices.forEach(p => {
-        const seg = document.createElement("div");
-        const ratio = (p - min) / (max - min);
-        const hue = 240 - ratio * 240; // 青→赤
-        seg.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
-        bar.appendChild(seg);
-      });
+    function renderPriceIndicators(priceList) {
+      for (let d = 0; d < 7; d++) {
+        const dailyPrices = priceList.slice(d * 48, (d + 1) * 48);
+        const bar = document.getElementById(`price-day-${d}`);
+        const min = Math.min(...dailyPrices);
+        const max = Math.max(...dailyPrices);
+        bar.innerHTML = "";
+        dailyPrices.forEach(p => {
+          const seg = document.createElement("div");
+          const ratio = (p - min) / (max - min + 0.0001);
+          const hue = 240 - ratio * 240;
+          seg.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+          bar.appendChild(seg);
+        });
+      }
     }
 
     async function runSimulation() {
@@ -159,7 +167,7 @@
         priceList.push(...dayPrices.map(p => p.price));
       }
 
-      renderPriceIndicator(priceList.slice(0, 48));
+      renderPriceIndicators(priceList);
 
       const data = [];
       const water = [];
