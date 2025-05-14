@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>びわ湖電池デモシミュレーション</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #eef8ff; padding: 2rem; text-align: center; }
+    h1 { font-size: 1.5em; }
+    .chart-container { width: 90%; max-width: 800px; margin: 2em auto; }
+  </style>
+</head>
+<body>
+  <h1>びわ湖電池 シミュレーションデモ（1日モデル）</h1>
+
+  <div class="chart-container">
+    <canvas id="priceChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <canvas id="waterChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <canvas id="profitChart"></canvas>
+  </div>
+
+  <script>
+    const labels = Array.from({ length: 48 }, (_, i) => {
+      const h = Math.floor(i / 2);
+      const m = i % 2 === 0 ? ":00" : ":30";
+      return `${h}${m}`;
+    });
+
+    // 仮の価格データ（昼安・夜高）
+    const prices = labels.map((_, i) => i < 20 ? 7 + Math.random() : 15 + Math.random() * 5);
+
+    // 水量シミュレーション（価格が8円未満なら+1、15円超なら-1）
+    let water = 50;
+    const waterLevels = prices.map(p => {
+      if (p < 8) water = Math.min(water + 2, 100);
+      else if (p > 15) water = Math.max(water - 2, 0);
+      return water;
+    });
+
+    // 価格 × 水量変化量で収支計算（±は資金の流れ方向）
+    let lastWater = 50;
+    const profits = prices.map((p, i) => {
+      const delta = waterLevels[i] - lastWater;
+      lastWater = waterLevels[i];
+      return -delta * p;
+    });
+
+    const makeChart = (id, label, data, color, type = 'line') => {
+      new Chart(document.getElementById(id).getContext('2d'), {
+        type: type,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: label,
+            data: data,
+            backgroundColor: color,
+            borderColor: color,
+            fill: type === 'line' ? false : true
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    };
+
+    makeChart("priceChart", "スポット価格 (円/kWh)", prices, "blue");
+    makeChart("waterChart", "上池水量 (%)", waterLevels, "green");
+    makeChart("profitChart", "損益 (±円)", profits, "orange", 'bar');
+  </script>
+</body>
+</html>
