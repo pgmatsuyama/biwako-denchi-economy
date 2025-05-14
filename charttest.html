@@ -46,7 +46,7 @@
             return;
           }
 
-          const labels = dayData.map(d => d.time);
+          const labels = [...dayData.map(d => d.time), "24:00"];
           const values = dayData.map(d => d.price);
 
           if (chart) chart.destroy();
