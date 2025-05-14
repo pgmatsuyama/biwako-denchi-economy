@@ -5,23 +5,29 @@
   <title>日付選択チャート - 関西スポット価格</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; background: #f0f8ff; padding: 2rem; }
+    body { font-family: sans-serif; background: #f0f8ff; padding: 2rem; text-align: center; }
     h1 { font-size: 1.5em; margin-bottom: 1em; }
     input[type="date"] { font-size: 1em; padding: 0.3em; }
-
-canvas {
-  max-width: 1000px;  /* ← 100%; */
-  height: 400px; /* ← ここで縦の高さを調整できます */
-  margin-top: 2em;
-}
+    .chart-container {
+      width: 80%;
+      max-width: 800px;
+      margin: 2em auto;
+    }
+    canvas {
+      width: 100%;
+      height: 400px;
+    }
   </style>
 </head>
 <body>
   <h1>関西スポット価格（2024–2025）</h1>
   <label for="datePicker">日付を選んでください：</label>
-  <input type="date" id="datePicker" value="2025-04-01">>
+  <input type="date" id="datePicker" value="2025-04-01">
 
-  <canvas id="chart"></canvas>
+  <div class="chart-container">
+    <canvas id="chart"></canvas>
+  </div>
+        <a class="btn" href="index.html">戻る →</a>
 
   <script>
     let chart;
@@ -31,8 +37,8 @@ canvas {
       .then(data => {
         const datePicker = document.getElementById("datePicker");
 
-        datePicker.addEventListener("change", () => {
-          const selectedDate = datePicker.value.replace(/-/g, "/");
+        function renderChart(dateStr) {
+          const selectedDate = dateStr.replace(/-/g, "/");
           const dayData = data[selectedDate];
 
           if (!dayData) {
@@ -65,12 +71,13 @@ canvas {
               }
             }
           });
-        });
-        datePicker.dispatchEvent(new Event("change"));　 /* ← 100%; */
+        }
 
+        datePicker.addEventListener("change", e => renderChart(e.target.value));
+
+        // 初期表示用に直接関数呼び出し
+        renderChart(datePicker.value);
       });
   </script>
-          <a class="btn" href="index.html">戻る →</a>
-
 </body>
 </html>
