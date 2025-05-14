@@ -12,14 +12,17 @@
     .generated { background-color: #f66; }
     .idle { background-color: #ccc; }
     .controls { margin-bottom: 1em; }
-    #price-indicator-bar, .price-day-bar {
+    .price-day-bar {
       display: grid;
-      grid-template-columns: repeat(48, 1fr);
-      height: 6px;
+      grid-template-columns: repeat(48, 16px);
+      gap: 2px;
+      height: 16px;
       margin: 4px 0;
     }
-    #price-indicator-bar div, .price-day-bar div {
-      height: 100%;
+    .price-day-bar div {
+      width: 16px;
+      height: 16px;
+      border: 1px solid #eee;
     }
     #chart-container { width: 100%; max-width: 800px; margin-top: 2em; }
     canvas { margin-bottom: 2em; }
@@ -38,7 +41,6 @@
     <button onclick="bankMoney()">💰 貯金</button>
     <button onclick="runSimulation()">▶️ 実行</button>
   </div>
-  <div id="price-indicator-bar"></div>
   <div id="week-grid"></div>
   <div id="chart-container">
     <canvas id="profitChart"></canvas>
