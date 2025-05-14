@@ -7,7 +7,11 @@
   <style>
     body { font-family: sans-serif; padding: 1em; background: #fff; }
     .grid { display: grid; grid-template-columns: repeat(48, 16px); gap: 2px; margin-bottom: 1em; }
-    .slot { width: 16px; height: 16px; border: 1px solid #ccc; cursor: pointer; }
+    .slot {
+      width: 16px; height: 16px; border: 1px solid #ccc; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: bold; line-height: 1;
+    }
     .pumped { background-color: #66f; }
     .generated { background-color: #f66; }
     .idle { background-color: #ccc; }
@@ -20,9 +24,7 @@
       margin: 4px 0;
     }
     .price-day-bar div {
-      width: 16px;
-      height: 16px;
-      border: 1px solid #eee;
+      width: 16px; height: 16px; border: 1px solid #eee;
     }
     #chart-container { width: 100%; max-width: 800px; margin-top: 2em; }
     canvas { margin-bottom: 2em; }
@@ -40,6 +42,13 @@
     <button onclick="loadStrategy()">📂 戦略復元</button>
     <button onclick="bankMoney()">💰 貯金</button>
     <button onclick="runSimulation()">▶️ 実行</button>
+    <label>表示モード:
+      <select id="iconMode" onchange="createGrid()">
+        <option value="emoji">💧⚡□</option>
+        <option value="arrow">↓↑□</option>
+        <option value="color">色のみ</option>
+      </select>
+    </label>
   </div>
   <div id="week-grid"></div>
   <div id="chart-container">
@@ -70,6 +79,13 @@
       });
     }
 
+    function getIcon(state) {
+      const mode = document.getElementById("iconMode")?.value || "emoji";
+      if (mode === "emoji") return { pumped: "💧", generated: "⚡", idle: "□" }[state];
+      if (mode === "arrow") return { pumped: "↓", generated: "↑", idle: "□" }[state];
+      return ""; // color only
+    }
+
     function createGrid() {
       const container = document.getElementById("week-grid");
       container.innerHTML = '';
@@ -88,7 +104,9 @@
         row.className = "grid";
         for (let h = 0; h < 48; h++) {
           const cell = document.createElement("div");
-          cell.className = "slot " + strategy[d][h];
+          const s = strategy[d][h];
+          cell.className = "slot " + s;
+          cell.innerHTML = getIcon(s);
           cell.dataset.day = d;
           cell.dataset.hour = h;
           cell.onclick = () => toggleState(cell);
@@ -105,6 +123,7 @@
       const next = ["idle", "pumped", "generated"][( ["idle", "pumped", "generated"].indexOf(current) + 1 ) % 3];
       strategy[d][h] = next;
       cell.className = "slot " + next;
+      cell.innerHTML = getIcon(next);
     }
 
     function setAll(state) {
@@ -113,6 +132,7 @@
         const d = +cell.dataset.day;
         const h = +cell.dataset.hour;
         strategy[d][h] = state;
+        cell.innerHTML = getIcon(state);
       });
     }
 
