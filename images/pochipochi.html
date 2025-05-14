@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>1日ポチポチ戦略エディタ</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f4fbff; padding: 2rem; text-align: center; }
+    table { margin: auto; border-collapse: collapse; }
+    th, td { padding: 0.3em 0.6em; border: 1px solid #ccc; font-size: 0.9em; }
+    select { font-size: 1em; }
+    canvas { margin-top: 2em; max-width: 800px; }
+    .bulk-form { margin: 2em auto; padding: 1em; border: 1px solid #aaa; display: inline-block; background: #fff; }
+  </style>
+</head>
+<body>
+  <h1>びわ湖電池｜1日戦略シミュレーター</h1>
+  <p>30分ごとに「揚水・発電・休止」を選んで、利益をシミュレーションしよう！</p>
+
+  <div class="bulk-form">
+    <label>開始：<select id="bulkStart"></select></label>
+    <label>終了：<select id="bulkEnd"></select></label>
+    <label>操作：
+      <select id="bulkAction">
+        <option value="rest">休止</option>
+        <option value="charge">揚水</option>
+        <option value="discharge">発電</option>
+      </select>
+    </label>
+    <button onclick="applyBulk()">一括適用</button>
+  </div>
+
+  <form id="strategyForm">
+    <table>
+      <thead>
+        <tr><th>時刻</th><th>価格</th><th>操作</th></tr>
+      </thead>
+      <tbody id="strategyTable"></tbody>
+    </table>
+    <br>
+    <button type="submit">シミュレーション実行</button>
+  </form>
+
+  <canvas id="profitChart"></canvas>
+
+  <script>
+    const slots = 48;
+    const labels = Array.from({ length: slots }, (_, i) => {
+      const h = Math.floor(i / 2);
+      const m = i % 2 === 0 ? ":00" : ":30";
+      return `${h}${m}`;
+    });
+
+    const prices = labels.map((_, i) => i < 20 ? 7 + Math.random() : 17 + Math.random() * 5);
+
+    const table = document.getElementById("strategyTable");
+    const bulkStart = document.getElementById("bulkStart");
+    const bulkEnd = document.getElementById("bulkEnd");
+
+    labels.forEach((label, i) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${label}</td>
+        <td>¥${prices[i].toFixed(2)}</td>
+        <td>
+          <select name="slot${i}" id="slot${i}">
+            <option value="rest">休止</option>
+            <option value="charge">揚水</option>
+            <option value="discharge">発電</option>
+          </select>
+        </td>
+      `;
+      table.appendChild(row);
+
+      // 一括用にも時間追加
+      const opt = new Option(label, i);
+      bulkStart.appendChild(opt.cloneNode(true));
+      bulkEnd.appendChild(opt.cloneNode(true));
+    });
+
+    function applyBulk() {
+      const start = parseInt(bulkStart.value);
+      const end = parseInt(bulkEnd.value);
+      const action = document.getElementById("bulkAction").value;
+      for (let i = start; i <= end; i++) {
+        document.getElementById(`slot${i}`).value = action;
+      }
+    }
+
+    document.getElementById("strategyForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const form = new FormData(e.target);
+
+      let water = 100, max = 100, min = 0;
+      const delta = 6.25;
+      let lastWater = water;
+      const deltas = [], profits = [];
+
+      for (let i = 0; i < slots; i++) {
+        const action = form.get(`slot${i}`);
+        let change = 0;
+        if (action === "charge" && water + delta <= max) change = delta;
+        if (action === "discharge" && water - delta >= min) change = -delta;
+        water += change;
+        deltas.push(change);
+        profits.push(-change * prices[i]);
+      }
+
+      const ctx = document.getElementById("profitChart").getContext("2d");
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "損益 (円)",
+            data: profits.map(v => Math.round(v)),
+            backgroundColor: profits.map(v => v >= 0 ? 'red' : 'blue')
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true } },
+          plugins: {
+            title: {
+              display: true,
+              text: `合計利益：¥${profits.reduce((a, b) => a + b, 0).toLocaleString()}`
+            }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
