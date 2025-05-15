@@ -96,10 +96,6 @@ function loadStrategy() {
   } else {
     alert("保存された戦略が見つかりません。");
   }
-    alert("戦略を復元しました。");
-  } else {
-    alert("保存された戦略が見つかりません。");
-  }
 }
 
 function bankMoney() {
