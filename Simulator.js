@@ -18,7 +18,7 @@ function getDynamicWeekdays(baseDateStr) {
     const d = new Date(baseDate);
     d.setDate(d.getDate() + i);
     const label = "日月火水木金土"[d.getDay()];
-    return `${label}\n${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+    return `${label}\n${String(d.getMonth()+1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
   });
 }
 
@@ -26,11 +26,10 @@ function getIcon(state) {
   const mode = document.getElementById("iconMode")?.value || "emoji";
   if (mode === "emoji") return { pumped: "💧", generated: "⚡", idle: "□" }[state];
   if (mode === "arrow") return { pumped: "↓", generated: "↑", idle: "□" }[state];
-  return ""; // color only
+  return "";
 }
 
 function createGrid() {
-  runSimulation(); // グリッド描画後にチャート更新
   const container = document.getElementById("week-grid");
   container.innerHTML = '';
   const baseDateStr = document.getElementById("startDate").value;
@@ -58,6 +57,8 @@ function createGrid() {
     }
     container.appendChild(row);
   });
+
+  runSimulation(); // グリッド描画後にチャート更新
 }
 
 function toggleState(cell) {
@@ -79,6 +80,7 @@ function setAll(state) {
     strategy[d][h] = state;
     cell.innerHTML = getIcon(state);
   });
+  runSimulation();
 }
 
 function saveStrategy() {
@@ -186,7 +188,7 @@ function showCharts(data, water) {
         y: { title: { display: true, text: "累積資産 (万円)" } }
       }
     }
-  });　
+  });
   waterChart = new Chart(ctx2, {
     type: 'line',
     data: {
@@ -215,7 +217,4 @@ async function loadPriceData() {
 
 loadPriceData().then(() => {
   createGrid();
-  setTimeout(runSimulation, 100);
-  createGrid();
-  runSimulation(); // 初期表示時に自動実行
 });
