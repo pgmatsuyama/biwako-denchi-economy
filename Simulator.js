@@ -17,6 +17,7 @@ let isDrawing = false;
 document.addEventListener('mousedown', () => isDrawing = true);
 document.addEventListener('mouseup', () => isDrawing = false);
 document.addEventListener('touchstart', () => isDrawing = true);
+
 document.addEventListener('touchend', () => isDrawing = false);
 
 document.getElementById("startDate").addEventListener("change", () => {
@@ -56,6 +57,14 @@ function createGrid() {
       cell.dataset.hour = h;
 
       cell.onclick = () => toggleState(cell);
+cell.addEventListener('touchmove', e => {
+  e.preventDefault(); // スクロール防止
+  const touch = e.touches[0];
+  const target = document.elementFromPoint(touch.clientX, touch.clientY);
+  if (target && target.classList.contains('slot')) {
+    toggleState(target);
+  }
+}, { passive: false });
 
       cell.addEventListener('mouseover', () => {
         if (isDrawing) toggleState(cell);
