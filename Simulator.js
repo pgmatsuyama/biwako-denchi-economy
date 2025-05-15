@@ -18,10 +18,8 @@ function getDynamicWeekdays(baseDateStr) {
     const d = new Date(baseDate);
     d.setDate(d.getDate() + i);
     const label = "日月火水木金土"[d.getDay()];
-    return `${label}
-${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+    return `${label}\n${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
   });
-});
 }
 
 function getIcon(state) {
