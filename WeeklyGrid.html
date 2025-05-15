@@ -53,7 +53,11 @@ button {
   </style>
 </head>
 <body>
-  <h1>びわ湖電池シミュレーター</h1>
+ // <h1>びわ湖電池シミュレーター</h1>
+ <h1 style="display: flex; justify-content: space-between;">
+    <span>びわ湖電池シミュレーター</span>
+    <span id="totalProfitDisplay">資産：0円</span>
+  </h1>
   <div class="controls">
     <input type="date" id="startDate" value="2024-04-01" />
     <button data-mode="pumped" onclick="setMode('pumped')">💧 揚水</button>
