@@ -17,8 +17,11 @@ function getDynamicWeekdays(baseDateStr) {
   return [...Array(7)].map((_, i) => {
     const d = new Date(baseDate);
     d.setDate(d.getDate() + i);
-    return "日月火水木金土"[d.getDay()];
+    const label = "日月火水木金土"[d.getDay()];
+    return `${label}
+${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
   });
+});
 }
 
 function getIcon(state) {
@@ -29,6 +32,7 @@ function getIcon(state) {
 }
 
 function createGrid() {
+  runSimulation(); // グリッド描画後にチャート更新
   const container = document.getElementById("week-grid");
   container.innerHTML = '';
   const baseDateStr = document.getElementById("startDate").value;
@@ -89,6 +93,11 @@ function loadStrategy() {
   if (saved) {
     strategy = JSON.parse(saved);
     createGrid();
+    runSimulation();
+    alert("戦略を復元しました。");
+  } else {
+    alert("保存された戦略が見つかりません。");
+  }
     alert("戦略を復元しました。");
   } else {
     alert("保存された戦略が見つかりません。");
