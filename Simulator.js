@@ -16,9 +16,13 @@ function getDynamicWeekdays(baseDateStr) {
   const baseDate = new Date(baseDateStr);
   return [...Array(7)].map((_, i) => {
     const d = new Date(baseDate);
-    d.setDate(d.getDate() + i);
+    d.setDate(baseDate.getDate() + i);
     const label = "日月火水木金土"[d.getDay()];
-    return `${label}\n${String(d.getMonth()+1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+    const mmdd = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+    return `${label}
+${mmdd}`;
+  });
+}\n${String(d.getMonth()+1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
   });
 }
 
@@ -217,4 +221,7 @@ async function loadPriceData() {
 
 loadPriceData().then(() => {
   createGrid();
+  document.getElementById("startDate").addEventListener("change", () => {
+    createGrid();
+  });
 });
