@@ -211,5 +211,7 @@ async function loadPriceData() {
 
 loadPriceData().then(() => {
   createGrid();
+  setTimeout(runSimulation, 100);
+  createGrid();
   runSimulation(); // 初期表示時に自動実行
 });
