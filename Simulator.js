@@ -36,6 +36,11 @@ function createGrid() {
   container.innerHTML = '';
   const baseDateStr = document.getElementById("startDate").value;
   const days = getDynamicWeekdays(baseDateStr);
+let isDrawing = false;
+document.addEventListener('mousedown', () => isDrawing = true);
+document.addEventListener('mouseup', () => isDrawing = false);
+document.addEventListener('touchstart', () => isDrawing = true);
+document.addEventListener('touchend', () => isDrawing = false);
 
   days.forEach((day, d) => {
     const label = document.createElement("div");
@@ -59,6 +64,23 @@ function createGrid() {
         cell.className = "slot " + currentMode;
         cell.innerHTML = getIcon(currentMode);
         runSimulation();
+
+      cell.onclick = () => toggleState(cell);
+
+// PCドラッグ対応
+cell.addEventListener('mouseover', () => {
+  if (isDrawing) toggleState(cell);
+});
+
+// スマホスライド対応
+cell.addEventListener('touchmove', e => {
+  const touch = e.touches[0];
+  const target = document.elementFromPoint(touch.clientX, touch.clientY);
+  if (target && target.classList.contains('slot')) {
+    toggleState(target);
+  }
+});
+      
       };
       row.appendChild(cell);
     }
