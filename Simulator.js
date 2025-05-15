@@ -11,6 +11,7 @@ let priceData = {};
 let profitChart;
 let waterChart;
 let startingCapital = parseFloat(localStorage.getItem("bankedMoney")) || 0;
+let currentMode = "idle";
 
 function getDynamicWeekdays(baseDateStr) {
   const baseDate = new Date(baseDateStr);
@@ -53,7 +54,12 @@ function createGrid() {
       cell.innerHTML = getIcon(s);
       cell.dataset.day = d;
       cell.dataset.hour = h;
-      cell.onclick = () => toggleState(cell);
+      cell.onclick = () => {
+        strategy[d][h] = currentMode;
+        cell.className = "slot " + currentMode;
+        cell.innerHTML = getIcon(currentMode);
+        runSimulation();
+      };
       row.appendChild(cell);
     }
     container.appendChild(row);
@@ -62,26 +68,11 @@ function createGrid() {
   runSimulation();
 }
 
-function toggleState(cell) {
-  const d = +cell.dataset.day;
-  const h = +cell.dataset.hour;
-  const current = strategy[d][h];
-  const next = ["idle", "pumped", "generated"][( ["idle", "pumped", "generated"].indexOf(current) + 1 ) % 3];
-  strategy[d][h] = next;
-  cell.className = "slot " + next;
-  cell.innerHTML = getIcon(next);
-  runSimulation();
-}
-
-function setAll(state) {
-  document.querySelectorAll(".slot").forEach(cell => {
-    cell.className = "slot " + state;
-    const d = +cell.dataset.day;
-    const h = +cell.dataset.hour;
-    strategy[d][h] = state;
-    cell.innerHTML = getIcon(state);
-  });
-  runSimulation();
+function setMode(state) {
+  currentMode = state;
+  document.querySelectorAll(".controls button").forEach(btn => btn.classList.remove("active"));
+  const activeBtn = document.querySelector(`.controls button[data-mode='${state}']`);
+  if (activeBtn) activeBtn.classList.add("active");
 }
 
 function saveStrategy() {
