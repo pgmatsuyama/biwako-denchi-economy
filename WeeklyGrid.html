@@ -27,9 +27,7 @@
       width: 16px; height: 10px; border: 1px solid #eee;  // 16px;
     }
     #chart-container { width: 100%; max-width: 760px; margin-top: 2em; }
- <div id="totalProfitDisplay" style="font-size: 1.6em; font-weight: bold; margin: 1em 0; color: darkgreen;">
-  資産：0円
-</div>
+
 
     
     canvas { margin-bottom: 1em;   height: 200px !important;}
@@ -60,7 +58,8 @@ button {
     <button onclick="saveStrategy()">💾 戦略保存</button>
     <button onclick="loadStrategy()">📂 戦略復元</button>
     <button onclick="bankMoney()">💰 貯金</button>
-    <button onclick="runSimulation()">▶️ 実行</button>
+  <!--  <button onclick="runSimulation()">▶️ 実行</button>
+    -->
     <!--
     <label>表示モード:
       <select id="iconMode" onchange="createGrid()">
@@ -71,6 +70,11 @@ button {
     </label>
     -->
   </div>
+
+ <div id="totalProfitDisplay" style="font-size: 1.6em; font-weight: bold; margin: 1em 0; color: darkgreen;">
+  資産：0円
+</div>
+  
   <div id="week-grid"></div>
   <div id="chart-container">
     <canvas id="waterChart"></canvas>
