@@ -1,4 +1,4 @@
-// simulator.js
+// simulator.js with drag and touch support
 const ENERGY_PER_SLOT = 1.0;
 const PUMP_EFFICIENCY = 0.7;
 const GENERATE_EFFICIENCY = 0.9;
@@ -12,23 +12,23 @@ let profitChart;
 let waterChart;
 let startingCapital = parseFloat(localStorage.getItem("bankedMoney")) || 0;
 let currentMode = "idle";
+let isDrawing = false;
 
-function getDynamicWeekdays(baseDateStr) {
-  const baseDate = new Date(baseDateStr);
-  return [...Array(7)].map((_, i) => {
-    const d = new Date(baseDate);
-    d.setDate(d.getDate() + i);
-    const label = "日月火水木金土"[d.getDay()];
-    const mmdd = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
-    return `${label}\n${mmdd}`;
-  });
-}
+document.addEventListener('mousedown', () => isDrawing = true);
+document.addEventListener('mouseup', () => isDrawing = false);
+document.addEventListener('touchstart', () => isDrawing = true);
+document.addEventListener('touchend', () => isDrawing = false);
 
-function getIcon(state) {
-  const mode = document.getElementById("iconMode")?.value || "emoji";
-  if (mode === "emoji") return { pumped: "💧", generated: "⚡", idle: "□" }[state];
-  if (mode === "arrow") return { pumped: "↓", generated: "↑", idle: "□" }[state];
-  return "";
+document.getElementById("startDate").addEventListener("change", () => {
+  createGrid();
+  runSimulation();
+});
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll("button[data-mode]").forEach(btn => btn.classList.remove("active"));
+  const btn = document.querySelector(`button[data-mode="${mode}"]`);
+  if (btn) btn.classList.add("active");
 }
 
 function createGrid() {
@@ -36,11 +36,6 @@ function createGrid() {
   container.innerHTML = '';
   const baseDateStr = document.getElementById("startDate").value;
   const days = getDynamicWeekdays(baseDateStr);
-let isDrawing = false;
-document.addEventListener('mousedown', () => isDrawing = true);
-document.addEventListener('mouseup', () => isDrawing = false);
-document.addEventListener('touchstart', () => isDrawing = true);
-document.addEventListener('touchend', () => isDrawing = false);
 
   days.forEach((day, d) => {
     const label = document.createElement("div");
@@ -59,42 +54,47 @@ document.addEventListener('touchend', () => isDrawing = false);
       cell.innerHTML = getIcon(s);
       cell.dataset.day = d;
       cell.dataset.hour = h;
-      cell.onclick = () => {
-        strategy[d][h] = currentMode;
-        cell.className = "slot " + currentMode;
-        cell.innerHTML = getIcon(currentMode);
-        runSimulation();
 
       cell.onclick = () => toggleState(cell);
 
-// PCドラッグ対応
-cell.addEventListener('mouseover', () => {
-  if (isDrawing) toggleState(cell);
-});
+      cell.addEventListener('mouseover', () => {
+        if (isDrawing) toggleState(cell);
+      });
 
-// スマホスライド対応
-cell.addEventListener('touchmove', e => {
-  const touch = e.touches[0];
-  const target = document.elementFromPoint(touch.clientX, touch.clientY);
-  if (target && target.classList.contains('slot')) {
-    toggleState(target);
-  }
-});
-      
-      };
+      cell.addEventListener('touchmove', e => {
+        const touch = e.touches[0];
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (target && target.classList.contains('slot')) toggleState(target);
+      });
+
       row.appendChild(cell);
     }
     container.appendChild(row);
   });
-
   runSimulation();
 }
 
-function setMode(state) {
-  currentMode = state;
-  document.querySelectorAll(".controls button").forEach(btn => btn.classList.remove("active"));
-  const activeBtn = document.querySelector(`.controls button[data-mode='${state}']`);
-  if (activeBtn) activeBtn.classList.add("active");
+function getDynamicWeekdays(baseDateStr) {
+  const baseDate = new Date(baseDateStr);
+  return [...Array(7)].map((_, i) => {
+    const d = new Date(baseDate);
+    d.setDate(d.getDate() + i);
+    const label = "日月火水木金土"[d.getDay()];
+    return `${label}\n${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  });
+}
+
+function getIcon(state) {
+  return { pumped: "💧", generated: "⚡", idle: "□" }[state];
+}
+
+function toggleState(cell) {
+  const d = +cell.dataset.day;
+  const h = +cell.dataset.hour;
+  strategy[d][h] = currentMode;
+  cell.className = "slot " + currentMode;
+  cell.innerHTML = getIcon(currentMode);
+  runSimulation();
 }
 
 function saveStrategy() {
@@ -107,7 +107,6 @@ function loadStrategy() {
   if (saved) {
     strategy = JSON.parse(saved);
     createGrid();
-    runSimulation();
     alert("戦略を復元しました。");
   } else {
     alert("保存された戦略が見つかりません。");
@@ -231,7 +230,4 @@ async function loadPriceData() {
 
 loadPriceData().then(() => {
   createGrid();
-  document.getElementById("startDate").addEventListener("change", () => {
-    createGrid();
-  });
 });
