@@ -16,13 +16,10 @@ function getDynamicWeekdays(baseDateStr) {
   const baseDate = new Date(baseDateStr);
   return [...Array(7)].map((_, i) => {
     const d = new Date(baseDate);
-    d.setDate(baseDate.getDate() + i);
+    d.setDate(d.getDate() + i);
     const label = "日月火水木金土"[d.getDay()];
     const mmdd = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
-    return `${label}
-${mmdd}`;
-  });
-}\n${String(d.getMonth()+1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+    return `${label}\n${mmdd}`;
   });
 }
 
@@ -62,7 +59,7 @@ function createGrid() {
     container.appendChild(row);
   });
 
-  runSimulation(); // グリッド描画後にチャート更新
+  runSimulation();
 }
 
 function toggleState(cell) {
