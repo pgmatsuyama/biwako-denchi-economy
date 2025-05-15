@@ -192,7 +192,7 @@ function showCharts(data, water) {
         y: { title: { display: true, text: "累積資産 (万円)" } }
       }
     }
-  });
+  });　
   waterChart = new Chart(ctx2, {
     type: 'line',
     data: {
