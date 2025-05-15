@@ -176,6 +176,8 @@ async function runSimulation() {
   }
   window.lastSimulatedTotal = total;
   showCharts(data, water);
+document.getElementById("totalProfitDisplay").textContent =
+  `資産：${Math.round(total).toLocaleString()} 円`;
 }
 
 function showCharts(data, water) {
