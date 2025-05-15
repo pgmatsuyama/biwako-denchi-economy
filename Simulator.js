@@ -66,6 +66,7 @@ function toggleState(cell) {
   strategy[d][h] = next;
   cell.className = "slot " + next;
   cell.innerHTML = getIcon(next);
+  runSimulation();
 }
 
 function setAll(state) {
