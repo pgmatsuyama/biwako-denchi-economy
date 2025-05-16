@@ -17,7 +17,7 @@ const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
 
 
 let weatherIcons = {};
-fetch('data/weather_icon_temp_2025_0401_0515.json')
+fetch('data/weather_icon_temp_2024_2025.json')
   .then(response => response.json())
   .then(data => {
     weatherIcons = data;
