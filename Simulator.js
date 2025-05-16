@@ -5,11 +5,12 @@ const GENERATE_EFFICIENCY = 0.9;
 const PRICE_DATA_URL = "data/spot_price_kansai_2024_2025.json";
 const KWH_PER_GWH = 1000000;
 const SLOT_HOURS = 0.5;
-const ymdStr = date.toLocaleDateString("ja-JP", {
+/*const ymdStr = date.toLocaleDateString("ja-JP", {
   year: "numeric",
   month: "2-digit",
   day: "2-digit"
 }).replace(/\//g, "/"); // 形式：2025/04/15
+*/
 
 let strategy = Array(7).fill().map(() => Array(48).fill("idle"));
 let priceData = {};
@@ -115,7 +116,34 @@ function renderCalendarWeather() {
     }
   });
 }
+function renderCalendarRow() {
+  const row = document.getElementById("calendar-row");
+  row.innerHTML = "";
+  const startDateStr = document.getElementById("startDate").value;
+  const startDate = new Date(startDateStr);
 
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + i);
+
+    const ymdStr = date.toLocaleDateString("ja-JP", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).replace(/\//g, "/");
+
+    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+    const weekday = weekDays[date.getDay()];
+    const icon = weatherIcons[ymdStr] || "？";
+
+    const cell = document.createElement("td");
+    cell.className = "calendar-day";
+    cell.setAttribute("data-date", ymdStr);
+    cell.textContent = `${weekday} ${dateStr} ${icon}`;
+    row.appendChild(cell);
+  }
+}
+/*
 function renderCalendarRow() {
   const row = document.getElementById("calendar-row");
   row.innerHTML = "";
@@ -137,7 +165,7 @@ function renderCalendarRow() {
     row.appendChild(cell);
   }
 }
-
+*/
 function getIcon(state) {
   return { pumped: "💧", generated: "⚡", idle: "□" }[state];
 }
