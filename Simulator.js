@@ -172,6 +172,7 @@ function bankMoney() {
   if (reset) {
     // 金庫は残して他をクリア（戦略や現在値など）
     lastTotal=0;
+    startingCapital=0;
   localStorage.setItem("bankedMoney", lastTotal);
     localStorage.removeItem("strategy");
     localStorage.removeItem("currentMoney");
