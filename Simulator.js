@@ -116,6 +116,7 @@ function renderCalendarWeather() {
     }
   });
 }
+
 function renderCalendarRow() {
   const row = document.getElementById("calendar-row");
   row.innerHTML = "";
@@ -126,11 +127,10 @@ function renderCalendarRow() {
     const date = new Date(startDate);
     date.setDate(date.getDate() + i);
 
-    const ymdStr = date.toLocaleDateString("ja-JP", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    }).replace(/\//g, "/");
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    const ymdStr = `${y}/${m}/${d}`; // ← 正確な形式！
 
     const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
     const weekday = weekDays[date.getDay()];
