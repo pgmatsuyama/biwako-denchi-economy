@@ -49,7 +49,7 @@ function createGrid() {
   const container = document.getElementById("week-grid");
   container.innerHTML = '';
   const baseDateStr = document.getElementById("startDate").value;
-  const days = getDynamicWeekdays(baseDateStr);
+  const days = getDynamicWeekdays(baseDateStr,weatherIcons);
 
   days.forEach((day, d) => {
     const label = document.createElement("div");
