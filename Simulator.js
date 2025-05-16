@@ -102,7 +102,7 @@ function getDynamicWeekdays(baseDateStr, weatherIcons) {
     const icon = weatherIcons?.[ymdStr]?.icon || "？";
     const temp = weatherIcons?.[ymdStr]?.temp !== undefined ? ` ${weatherIcons[ymdStr].temp}℃` : "";
 
-    return `${label}<br>${m}/${day} ${icon}${temp}`;
+    return `${label}  ${m}/${day} ${icon}${temp}`;
   });
 }
 /*
