@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>びわ湖電池プロジェクト™</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      line-height: 1.6;
+      margin: 2em;
+      background-color: #f4f9ff;
+    }
+    h1 {
+      font-size: 1.8em;
+      margin-bottom: 0.2em;
+    }
+    h2 {
+      font-size: 1.3em;
+      border-bottom: 1px solid #ccc;
+      margin-top: 2em;
+    }
+    ul {
+      padding-left: 1.2em;
+    }
+    code {
+      background: #eee;
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+    }
+    .qrcodes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2em;
+      margin-top: 1em;
+    }
+    .qrcodes div {
+      text-align: center;
+      max-width: 150px;
+    }
+  </style>
+</head>
+<body>
+  <h1>びわ湖電池プロジェクト™</h1>
+  <p>このリポジトリは、地域の自然エネルギーを活用するための教育・研究・体験的なコンテンツを提供します。</p>
+
+  <h2>📂 主な構成</h2>
+  <ul>
+    <li><code>index.html</code> - トップページ、全体概要</li>
+    <li><code>correlationchart.html</code> - 気象や曜日と電力価格の相関分析ツール</li>
+    <li><code>data/</code> - 実際の気象・電力価格データ (JSON形式)</li>
+  </ul>
+
+  <h2>🔗 関連リンクとQRコード</h2>
+  <div class="qrcodes">
+    <div>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://pgmatsuyama.github.io/biwako-denchi-kids/" alt="Kids QR">
+      <p style="margin: 0.5em 0;"><strong>びわ湖電池キッズ</strong></p>
+      <a href="https://pgmatsuyama.github.io/biwako-denchi-kids/" target="_blank">キッズページ</a>
+    </div>
+    <div>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://pgmatsuyama.github.io/biwako-denchi-economy/correlationchart.html" alt="相関 QR">
+      <p style="margin: 0.5em 0;"><strong>電力×天気 相関図</strong></p>
+      <a href="https://pgmatsuyama.github.io/biwako-denchi-economy/correlationchart.html" target="_blank">correlationchart</a>
+    </div>
+    <div>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://pgmatsuyama.github.io/biwako-denchi-economy/charttest.html" alt="チャート QR">
+      <p style="margin: 0.5em 0;"><strong>電力価格チャート</strong></p>
+      <a href="https://pgmatsuyama.github.io/biwako-denchi-economy/charttest.html" target="_blank">charttest</a>
+    </div>
+    <div>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://pgmatsuyama.github.io/biwako-denchi-economy/" alt="経済 QR">
+      <p style="margin: 0.5em 0;"><strong>びわ湖電池の経済学</strong></p>
+      <a href="https://pgmatsuyama.github.io/biwako-denchi-economy/" target="_blank">
+        https://...biwako-denchi-economy/
+      </a>
+    </div>
+  </div>
+
+  <footer style="margin-top: 3em; font-size: 0.9em; color: #555;">
+    <p><strong>びわ湖電池プロジェクト™</strong></p>
+    <p>出典：</p>
+    <ul>
+      <li>電力スポット価格：<a href="https://www.jepx.jp/" target="_blank">JEPX（日本卸電力取引所）関西エリア</a></li>
+      <li>気象データ：<a href="https://www.data.jma.go.jp/" target="_blank">気象庁 大阪地点の気象統計データ</a></li>
+    </ul>
+  </footer>
+</body>
+</html>
