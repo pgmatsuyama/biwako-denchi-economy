@@ -112,11 +112,23 @@ function loadStrategy() {
     alert("保存された戦略が見つかりません。");
   }
 }
-
 function bankMoney() {
   const lastTotal = window.lastSimulatedTotal || 0;
   localStorage.setItem("bankedMoney", lastTotal);
-  alert(`貯金しました！ ${lastTotal.toLocaleString()} 円を金庫に保存しました。`);
+
+  const reset = window.confirm(
+    `貯金しました！\n${lastTotal.toLocaleString()} 円を金庫に保存しました。\n\n[OK] → 金庫だけ残してゲームをリセット\n[キャンセル] → このまま続行`
+  );
+
+  if (reset) {
+    // 金庫は残して他をクリア（戦略や現在値など）
+    localStorage.removeItem("strategy");
+    localStorage.removeItem("currentMoney");
+    localStorage.removeItem("slotData"); // 他にも消すものがあれば追加
+    location.reload(); // ページをリロードして初期化
+  } else {
+    alert("現在の状態を維持して続行します。");
+  }
 }
 
 function renderPriceIndicators(priceList) {
