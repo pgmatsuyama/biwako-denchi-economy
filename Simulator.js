@@ -5,12 +5,6 @@ const GENERATE_EFFICIENCY = 0.9;
 const PRICE_DATA_URL = "data/spot_price_kansai_2024_2025.json";
 const KWH_PER_GWH = 1000000;
 const SLOT_HOURS = 0.5;
-/*const ymdStr = date.toLocaleDateString("ja-JP", {
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit"
-}).replace(/\//g, "/"); // 形式：2025/04/15
-*/
 
 let strategy = Array(7).fill().map(() => Array(48).fill("idle"));
 let priceData = {};
@@ -23,7 +17,7 @@ const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
 
 
 let weatherIcons = {};
-fetch('data/weather_icons_from_text_2025_0401_0515.json')
+fetch('data/weather_icon_temp_2025_0401_0515.json')
   .then(response => response.json())
   .then(data => {
     weatherIcons = data;
@@ -116,7 +110,42 @@ function renderCalendarWeather() {
     }
   });
 }
+function renderCalendarRow() {
+  const row = document.getElementById("calendar-row");
+  row.innerHTML = "";
+  const startDateStr = document.getElementById("startDate").value;
+  const startDate = new Date(startDateStr);
 
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + i);
+
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    const ymdStr = `${y}/${m}/${d}`;
+
+    const dateStr = `${m}/${d}`;
+    const weekday = weekDays[date.getDay()];
+
+    const weatherData = weatherIcons[ymdStr];
+    let weatherStr = "？";
+
+    if (weatherData) {
+      weatherStr = weatherData.icon;
+      if (weatherData.temp !== undefined) {
+        weatherStr += ` ${weatherData.temp}℃`;
+      }
+    }
+
+    const cell = document.createElement("td");
+    cell.className = "calendar-day";
+    cell.setAttribute("data-date", ymdStr);
+    cell.textContent = `${weekday} ${dateStr} ${weatherStr}`;
+    row.appendChild(cell);
+  }
+}
+/*
 function renderCalendarRow() {
   const row = document.getElementById("calendar-row");
   row.innerHTML = "";
@@ -143,7 +172,7 @@ function renderCalendarRow() {
     row.appendChild(cell);
   }
 }
-/*
+
 function renderCalendarRow() {
   const row = document.getElementById("calendar-row");
   row.innerHTML = "";
