@@ -14,6 +14,15 @@ let startingCapital = parseFloat(localStorage.getItem("bankedMoney")) || 0;
 let currentMode = "idle";
 let isDrawing = false;
 
+let weatherIcons = {};
+fetch('data/weather_icons_from_text_2025_0401_0515.json')
+  .then(response => response.json())
+  .then(data => {
+    weatherIcons = data;
+    renderCalendarWeather(); // 読み込み後に描画　２０２５０５１６
+  });
+
+
 document.addEventListener('mousedown', () => isDrawing = true);
 document.addEventListener('mouseup', () => isDrawing = false);
 document.addEventListener('touchstart', () => isDrawing = true);
@@ -81,6 +90,19 @@ function getDynamicWeekdays(baseDateStr) {
     d.setDate(d.getDate() + i);
     const label = "日月火水木金土"[d.getDay()];
     return `${label}\n${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  });
+}
+function renderCalendarWeather() {
+  const dateCells = document.querySelectorAll('.calendar-day');
+  dateCells.forEach(cell => {
+    const dateStr = cell.getAttribute('data-date'); // 例: "2025/04/02"
+    if (weatherIcons[dateStr]) {
+      const icon = document.createElement('span');
+      icon.textContent = weatherIcons[dateStr];
+      icon.style.marginLeft = '0.3em';
+      icon.title = '天気';
+      cell.appendChild(icon);
+    }
   });
 }
 
