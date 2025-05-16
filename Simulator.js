@@ -13,6 +13,8 @@ let waterChart;
 let startingCapital = parseFloat(localStorage.getItem("bankedMoney")) || 0;
 let currentMode = "idle";
 let isDrawing = false;
+const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
+
 
 let weatherIcons = {};
 fetch('data/weather_icons_from_text_2025_0401_0515.json')
@@ -27,6 +29,9 @@ document.addEventListener('mousedown', () => isDrawing = true);
 document.addEventListener('mouseup', () => isDrawing = false);
 document.addEventListener('touchstart', () => isDrawing = true);
 document.addEventListener('touchend', () => isDrawing = false);
+
+// 日付変更時に天気も再描画
+document.getElementById("startDate").addEventListener("change", renderCalendarRow);
 
 document.getElementById("startDate").addEventListener("change", () => {
   createGrid();
@@ -104,6 +109,28 @@ function renderCalendarWeather() {
       cell.appendChild(icon);
     }
   });
+}
+
+function renderCalendarRow() {
+  const row = document.getElementById("calendar-row");
+  row.innerHTML = "";
+  const startDateStr = document.getElementById("startDate").value;
+  const startDate = new Date(startDateStr);
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + i);
+    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+    const ymdStr = date.toISOString().slice(0, 10).replace(/-/g, "/");
+    const weekday = weekDays[date.getDay()];
+    const icon = weatherIcons[ymdStr] || "？";
+
+    const cell = document.createElement("td");
+    cell.className = "calendar-day";
+    cell.setAttribute("data-date", ymdStr);
+    cell.textContent = `${weekday} ${dateStr} ${icon}`;
+    row.appendChild(cell);
+  }
 }
 
 function getIcon(state) {
@@ -270,3 +297,5 @@ async function loadPriceData() {
 loadPriceData().then(() => {
   createGrid();
 });
+
+<table id="weather-calendar"><tr id="calendar-row"></tr></table>
