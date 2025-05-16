@@ -150,6 +150,7 @@ function toggleState(cell) {
 function saveStrategy() {
   localStorage.setItem("weeklyStrategy", JSON.stringify(strategy));
   alert("戦略を保存しました。");
+console.log("読み込んだ天気マークデータ:", weatherIcons);
 }
 
 function loadStrategy() {
