@@ -87,7 +87,25 @@ function createGrid() {
   });
   runSimulation();
 }
+function getDynamicWeekdays(baseDateStr, weatherIcons) {
+  const baseDate = new Date(baseDateStr);
+  return [...Array(7)].map((_, i) => {
+    const d = new Date(baseDate);
+    d.setDate(d.getDate() + i);
 
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const ymdStr = `${y}/${m}/${day}`;
+
+    const label = "日月火水木金土"[d.getDay()];
+    const icon = weatherIcons?.[ymdStr]?.icon || "？";
+    const temp = weatherIcons?.[ymdStr]?.temp !== undefined ? ` ${weatherIcons[ymdStr].temp}℃` : "";
+
+    return `${label}<br>${m}/${day} ${icon}${temp}`;
+  });
+}
+/*
 function getDynamicWeekdays(baseDateStr) {
   const baseDate = new Date(baseDateStr);
   return [...Array(7)].map((_, i) => {
@@ -97,6 +115,7 @@ function getDynamicWeekdays(baseDateStr) {
     return `${label}\n${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
   });
 }
+*/
 function renderCalendarWeather() {
   const dateCells = document.querySelectorAll('.calendar-day');
   dateCells.forEach(cell => {
