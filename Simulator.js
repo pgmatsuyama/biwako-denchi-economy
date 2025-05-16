@@ -298,4 +298,4 @@ loadPriceData().then(() => {
   createGrid();
 });
 
-<table id="weather-calendar"><tr id="calendar-row"></tr></table>
+
