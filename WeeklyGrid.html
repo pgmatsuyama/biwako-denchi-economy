@@ -65,7 +65,7 @@ button {
     <span id="totalProfitDisplay">資産：0円</span>
   </h1>
   <div class="controls">
-    <input type="date" id="startDate" value="2025-04-01" />
+    <input type="date" id="startDate" value="2024-04-01" />
     <button data-mode="pumped" onclick="setMode('pumped')">💧 揚水</button>
     <button data-mode="generated" onclick="setMode('generated')">⚡ 発電</button>
     <button data-mode="idle" onclick="setMode('idle')">🛌 休止</button>
@@ -84,9 +84,9 @@ button {
     </label>
     -->
   </div>
-<!--
-<table id="weather-calendar"><tr id="calendar-row"></tr></table>
--->  
+
+
+  
   <div id="week-grid"></div>
   <div id="chart-container">
     <canvas id="waterChart"></canvas>
@@ -94,4 +94,10 @@ button {
   </div>
   <script src="Simulator.js"></script>
 </body>
+<footer style="margin-top: 2em; font-size: 0.9em; color: #555;">
+  <p><strong>びわ湖電池プロジェクト™</strong><br>出典： <ul>
+    <li>電力スポット価格：<a href="https://www.jepx.jp/" target="_blank">JEPX（日本卸電力取引所）関西エリア</a></li>
+    <li>気象データ：<a href="https://www.data.jma.go.jp/" target="_blank">気象庁 大阪地点の気象統計データ</a></li>
+  </ul>
+</footer>
 </html>

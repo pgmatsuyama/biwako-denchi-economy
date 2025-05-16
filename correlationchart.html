@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>びわ湖電池 相関図チャート</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 1em; }
+    .controls { margin-bottom: 1em; }
+    select, button {
+      padding: 6px 10px;
+      margin-right: 10px;
+      font-size: 1em;
+    }
+    canvas { max-width: 1000px; background: #fff; padding: 1em; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
+  </style>
+</head>
+<body>
+  <h1>びわ湖電池 相関分析チャート</h1>
+  <div class="controls">
+    <label>表示モード:
+      <select id="mode" onchange="updateChart()">
+        <option value="temp_day">気温 vs 昼価格</option>
+        <option value="temp_night">気温 vs 夜価格</option>
+        <option value="weather_day">天気マーク vs 昼価格</option>
+        <option value="weather_night">天気マーク vs 夜価格</option>
+        <option value="weekday_day">曜日 vs 昼価格</option>
+        <option value="weekday_night">曜日 vs 夜価格</option>
+      </select>
+    </label>
+    <label>季節:
+      <select id="season" onchange="updateChart()">
+        <option value="all">全期間</option>
+        <option value="spring">春（3〜5月）</option>
+        <option value="summer">夏（6〜8月）</option>
+        <option value="autumn">秋（9〜11月）</option>
+        <option value="winter">冬（12〜2月）</option>
+      </select>
+    </label>
+  </div>
+
+  <canvas id="correlationChart"></canvas>
+
+  <script>
+    let chart;
+    let fullData = [];
+
+    async function loadData() {
+      const res = await fetch('data/combined_data.json');
+      const json = await res.json();
+      fullData = Object.entries(json).map(([date, obj]) => ({ date, ...obj }));
+      updateChart();
+    }
+
+    function getSeason(dateStr) {
+      const month = parseInt(dateStr.split('/')[1]);
+      if ([3, 4, 5].includes(month)) return 'spring';
+      if ([6, 7, 8].includes(month)) return 'summer';
+      if ([9, 10, 11].includes(month)) return 'autumn';
+      if ([12, 1, 2].includes(month)) return 'winter';
+      return 'unknown';
+    }
+
+    function getDayOfWeek(dateStr) {
+      const d = new Date(dateStr);
+      return "日月火水木金土"[d.getDay()];
+    }
+
+    function getAveragedPricesByGroup(data, mode, groupKey) {
+      const group = {};
+      data.forEach(d => {
+        let key;
+        if (groupKey === 'icon') {
+          key = d.icon;
+        } else if (groupKey === 'weekday') {
+          key = getDayOfWeek(d.date);
+        }
+        const price = (mode.includes('day')) ? d.day_avg_price : d.night_avg_price;
+        if (price == null || key == null) return;
+        if (!group[key]) group[key] = [];
+        group[key].push(price);
+      });
+
+      const weekdayOrder = ["月", "火", "水", "木", "金", "土", "日"];
+
+      let labels;
+      if (groupKey === 'weekday') {
+        labels = weekdayOrder.filter(k => group[k]);
+      } else {
+        labels = Object.keys(group);
+      }
+
+      const values = labels.map(k => {
+        const avg = group[k].reduce((a, b) => a + b, 0) / group[k].length;
+        return Math.round(avg * 10) / 10;
+      });
+
+      return { labels, values };
+    }
+
+    function updateChart() {
+      const mode = document.getElementById('mode').value;
+      const season = document.getElementById('season').value;
+
+      const filtered = fullData.filter(d => {
+        const seasonMatch = season === 'all' || getSeason(d.date) === season;
+        const priceValid = (mode.includes('day') ? d.day_avg_price : d.night_avg_price) !== null;
+        return seasonMatch && priceValid;
+      });
+
+      if (chart) chart.destroy();
+
+      let chartData = {}, labelTitle = '', chartType = 'scatter';
+
+      if (mode === 'temp_day' || mode === 'temp_night') {
+        const tempData = filtered.map(d => ({ x: d.temp, y: mode === 'temp_day' ? d.day_avg_price : d.night_avg_price }));
+        chartData = {
+          datasets: [{
+            label: '気温 vs 価格',
+            data: tempData,
+            backgroundColor: '#3399ff'
+          }]
+        };
+        labelTitle = '気温(℃)';
+        chartType = 'scatter';
+      } else if (mode === 'weather_day' || mode === 'weather_night') {
+        const { labels, values } = getAveragedPricesByGroup(filtered, mode, 'icon');
+        chartData = {
+          labels: labels,
+          datasets: [{
+            label: '天気マーク vs 平均価格',
+            data: values,
+            backgroundColor: '#66bb6a'
+          }]
+        };
+        labelTitle = '天気マーク';
+        chartType = 'bar';
+      } else if (mode === 'weekday_day' || mode === 'weekday_night') {
+        const { labels, values } = getAveragedPricesByGroup(filtered, mode, 'weekday');
+        chartData = {
+          labels: labels,
+          datasets: [{
+            label: '曜日 vs 平均価格',
+            data: values,
+            backgroundColor: '#ffa726'
+          }]
+        };
+        labelTitle = '曜日';
+        chartType = 'bar';
+      }
+
+      chart = new Chart(document.getElementById('correlationChart'), {
+        type: chartType,
+        data: chartData,
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              title: { display: true, text: labelTitle },
+              beginAtZero: chartType === 'bar'
+            },
+            y: {
+              min: 0,
+              max: 30,
+              title: { display: true, text: '価格（円）' }
+            }
+          },
+          plugins: {
+            tooltip: { callbacks: { label: ctx => `${ctx.raw.y ?? ctx.raw} 円` } }
+          }
+        }
+      });
+    }
+
+    loadData();
+  </script>
+</body>
+<footer style="margin-top: 2em; font-size: 0.9em; color: #555;">
+        <p><strong>びわ湖電池プロジェクト™</strong><br>出典： <ul>
+          <li>電力スポット価格：<a href="https://www.jepx.jp/" target="_blank">JEPX（日本卸電力取引所）関西エリア</a></li>
+          <li>気象データ：<a href="https://www.data.jma.go.jp/" target="_blank">気象庁 大阪地点の気象統計データ</a></li>
+        </ul>
+      </footer>
+</html>

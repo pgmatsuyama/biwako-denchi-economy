@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>気象と電力価格の相関分析</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1em; background: #f9f9f9; }
+    canvas { max-width: 800px; margin-bottom: 2em; }
+    .buttons, .season-select { margin-bottom: 1em; }
+    button {
+      padding: 8px 16px;
+      margin-right: 8px;
+      font-size: 1em;
+      border-radius: 4px;
+    }
+    select {
+      font-size: 1em;
+      padding: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>気象と電力価格の相関分析ツール</h1>
+  <div class="season-select">
+    <label for="season">季節を選択：</label>
+    <select id="season" onchange="filterSeason()">
+      <option value="all">全期間</option>
+      <option value="spring">春（3〜5月）</option>
+      <option value="summer">夏（6〜8月）</option>
+      <option value="autumn">秋（9〜11月）</option>
+      <option value="winter">冬（12〜2月）</option>
+    </select>
+  </div>
+  <div class="buttons">
+    <button onclick="updateChart('temp_day')">気温 vs 昼価格</button>
+    <button onclick="updateChart('temp_night')">気温 vs 夜価格</button>
+    <button onclick="updateChart('weather_day')">天気マーク vs 昼価格</button>
+    <button onclick="updateChart('weather_night')">天気マーク vs 夜価格</button>
+  </div>
+  <canvas id="correlationChart"></canvas>
+
+  <script>
+    let chart;
+    const ctx = document.getElementById('correlationChart').getContext('2d');
+
+    const fullData = [
+      { date: "2024/04/01", temp: 16.7, icon: "☀", day: 1.8, night: 10.1 },
+      { date: "2024/04/02", temp: 15.3, icon: "☁", day: 4.4, night: 11.3 },
+      { date: "2024/04/03", temp: 14.5, icon: "🌧", day: 15.9, night: 10.7 },
+      { date: "2024/04/04", temp: 15.4, icon: "☁", day: 8.8, night: 11.3 },
+      { date: "2024/04/05", temp: 14.7, icon: "☁", day: 8.8, night: 11.9 },
+      { date: "2024/07/06", temp: 29.1, icon: "☀", day: 8.4, night: 14.2 }
+    ];
+
+    let currentSeason = "all";
+
+    function filterSeason() {
+      currentSeason = document.getElementById("season").value;
+      updateChart(currentMode);
+    }
+
+    function getSeasonFilteredData() {
+      if (currentSeason === "all") return fullData;
+      return fullData.filter(d => {
+        const month = parseInt(d.date.split("/")[1]);
+        if (currentSeason === "spring") return [3,4,5].includes(month);
+        if (currentSeason === "summer") return [6,7,8].includes(month);
+        if (currentSeason === "autumn") return [9,10,11].includes(month);
+        if (currentSeason === "winter") return [12,1,2].includes(month);
+      });
+    }
+
+    let currentMode = 'temp_day';
+
+    function updateChart(mode) {
+      currentMode = mode;
+      if (chart) chart.destroy();
+
+      const data = getSeasonFilteredData();
+      let labels = [], values = [], labelTitle = '', yTitle = '円';
+
+      if (mode === 'temp_day') {
+        labels = data.map(d => d.temp);
+        values = data.map(d => d.day);
+        labelTitle = '気温(℃)';
+      } else if (mode === 'temp_night') {
+        labels = data.map(d => d.temp);
+        values = data.map(d => d.night);
+        labelTitle = '気温(℃)';
+      } else if (mode === 'weather_day') {
+        labels = data.map(d => d.icon);
+        values = data.map(d => d.day);
+        labelTitle = '天気マーク';
+      } else if (mode === 'weather_night') {
+        labels = data.map(d => d.icon);
+        values = data.map(d => d.night);
+        labelTitle = '天気マーク';
+      }
+
+      chart = new Chart(ctx, {
+        type: (labelTitle === '天気マーク') ? 'bar' : 'scatter',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: `${labelTitle} vs 価格`,
+            data: labels.map((x, i) => labelTitle === '天気マーク' ? values[i] : ({ x, y: values[i] })),
+            backgroundColor: '#3399ff'
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              title: { display: true, text: labelTitle }
+            },
+            y: {
+              title: { display: true, text: yTitle }
+            }
+          },
+          plugins: {
+            tooltip: { callbacks: { label: ctx => `${ctx.raw.y ?? ctx.raw} 円` } }
+          }
+        }
+      });
+    }
+
+    updateChart('temp_day');
+  </script>
+</body>
+<footer style="margin-top: 2em; font-size: 0.9em; color: #555;">
+  <p><strong>びわ湖電池プロジェクト™</strong><br>出典： <ul>
+    <li>電力スポット価格：<a href="https://www.jepx.jp/" target="_blank">JEPX（日本卸電力取引所）関西エリア</a></li>
+    <li>気象データ：<a href="https://www.data.jma.go.jp/" target="_blank">気象庁 大阪地点の気象統計データ</a></li>
+  </ul>
+</footer>
+</html>

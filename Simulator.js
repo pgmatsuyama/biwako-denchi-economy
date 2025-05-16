@@ -13,25 +13,11 @@ let waterChart;
 let startingCapital = parseFloat(localStorage.getItem("bankedMoney")) || 0;
 let currentMode = "idle";
 let isDrawing = false;
-const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
-
-
-let weatherIcons = {};
-fetch('data/weather_icon_temp_2024_2025.json')
-  .then(response => response.json())
-  .then(data => {
-    weatherIcons = data;
-    renderCalendarWeather(); // 読み込み後に描画　２０２５０５１６
-  });
-
 
 document.addEventListener('mousedown', () => isDrawing = true);
 document.addEventListener('mouseup', () => isDrawing = false);
 document.addEventListener('touchstart', () => isDrawing = true);
 document.addEventListener('touchend', () => isDrawing = false);
-
-// 日付変更時に天気も再描画
-document.getElementById("startDate").addEventListener("change", renderCalendarRow);
 
 document.getElementById("startDate").addEventListener("change", () => {
   createGrid();
@@ -49,7 +35,7 @@ function createGrid() {
   const container = document.getElementById("week-grid");
   container.innerHTML = '';
   const baseDateStr = document.getElementById("startDate").value;
-  const days = getDynamicWeekdays(baseDateStr,weatherIcons);
+  const days = getDynamicWeekdays(baseDateStr);
 
   days.forEach((day, d) => {
     const label = document.createElement("div");
@@ -87,25 +73,7 @@ function createGrid() {
   });
   runSimulation();
 }
-function getDynamicWeekdays(baseDateStr, weatherIcons) {
-  const baseDate = new Date(baseDateStr);
-  return [...Array(7)].map((_, i) => {
-    const d = new Date(baseDate);
-    d.setDate(d.getDate() + i);
 
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const ymdStr = `${y}/${m}/${day}`;
-
-    const label = "日月火水木金土"[d.getDay()];
-    const icon = weatherIcons?.[ymdStr]?.icon || "？";
-    const temp = weatherIcons?.[ymdStr]?.temp !== undefined ? ` ${weatherIcons[ymdStr].temp}℃` : "";
-
-    return `${label}  ${m}/${day} ${icon}${temp}`;
-  });
-}
-/*
 function getDynamicWeekdays(baseDateStr) {
   const baseDate = new Date(baseDateStr);
   return [...Array(7)].map((_, i) => {
@@ -115,105 +83,7 @@ function getDynamicWeekdays(baseDateStr) {
     return `${label}\n${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
   });
 }
-*/
-function renderCalendarWeather() {
-  const dateCells = document.querySelectorAll('.calendar-day');
-  dateCells.forEach(cell => {
-    const dateStr = cell.getAttribute('data-date'); // 例: "2025/04/02"
-    if (weatherIcons[dateStr]) {
-      const icon = document.createElement('span');
-      icon.textContent = weatherIcons[dateStr];
-      icon.style.marginLeft = '0.3em';
-      icon.title = '天気';
-      cell.appendChild(icon);
-    }
-  });
-}
-function renderCalendarRow() {
-  const row = document.getElementById("calendar-row");
-  row.innerHTML = "";
-  const startDateStr = document.getElementById("startDate").value;
-  const startDate = new Date(startDateStr);
 
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(startDate);
-    date.setDate(date.getDate() + i);
-
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    const ymdStr = `${y}/${m}/${d}`;
-
-    const dateStr = `${m}/${d}`;
-    const weekday = weekDays[date.getDay()];
-
-    const weatherData = weatherIcons[ymdStr];
-    let weatherStr = "？";
-
-    if (weatherData) {
-      weatherStr = weatherData.icon;
-      if (weatherData.temp !== undefined) {
-        weatherStr += ` ${weatherData.temp}℃`;
-      }
-    }
-
-    const cell = document.createElement("td");
-    cell.className = "calendar-day";
-    cell.setAttribute("data-date", ymdStr);
-    cell.textContent = `${weekday} ${dateStr} ${weatherStr}`;
-    row.appendChild(cell);
-  }
-}
-/*
-function renderCalendarRow() {
-  const row = document.getElementById("calendar-row");
-  row.innerHTML = "";
-  const startDateStr = document.getElementById("startDate").value;
-  const startDate = new Date(startDateStr);
-
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(startDate);
-    date.setDate(date.getDate() + i);
-
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    const ymdStr = `${y}/${m}/${d}`; // ← 正確な形式！
-
-    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-    const weekday = weekDays[date.getDay()];
-    const icon = weatherIcons[ymdStr] || "？";
-
-    const cell = document.createElement("td");
-    cell.className = "calendar-day";
-    cell.setAttribute("data-date", ymdStr);
-    cell.textContent = `${weekday} ${dateStr} ${icon}`;
-    row.appendChild(cell);
-  }
-}
-
-function renderCalendarRow() {
-  const row = document.getElementById("calendar-row");
-  row.innerHTML = "";
-  const startDateStr = document.getElementById("startDate").value;
-  const startDate = new Date(startDateStr);
-
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(startDate);
-    date.setDate(date.getDate() + i);
-    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-    const ymdStr = date.toISOString().slice(0, 10).replace(/-/g, "/");
-    const weekday = weekDays[date.getDay()];
-    const icon = weatherIcons[ymdStr] || "？";
-
-    const cell = document.createElement("td");
-    cell.className = "calendar-day";
-    cell.setAttribute("data-date", ymdStr);
-    cell.textContent = `${weekday} ${dateStr} ${icon}`;
-    row.appendChild(cell);
-  }
-}
-*/
 function getIcon(state) {
   return { pumped: "💧", generated: "⚡", idle: "□" }[state];
 }
@@ -230,7 +100,6 @@ function toggleState(cell) {
 function saveStrategy() {
   localStorage.setItem("weeklyStrategy", JSON.stringify(strategy));
   alert("戦略を保存しました。");
-console.log("読み込んだ天気マークデータ:", weatherIcons);
 }
 
 function loadStrategy() {
@@ -248,14 +117,14 @@ function bankMoney() {
   localStorage.setItem("bankedMoney", lastTotal);
 
   const reset = window.confirm(
-    `貯金しました！\n${lastTotal.toLocaleString()} 円を金庫に保存しました。\n\n[OK] → ゲームをリセット\n[キャンセル] → このまま続行`
+    `貯金しました！\n${lastTotal.toLocaleString()} 円を金庫に保存しました。\n\n[OK] → ゲームをリセット 貯金を０にします\n[キャンセル] → このまま続行`
   );
 
   if (reset) {
     // 金庫は残して他をクリア（戦略や現在値など）
-    lastTotal=0;
+  
     startingCapital=0;
-  localStorage.setItem("bankedMoney", lastTotal);
+    localStorage.setItem("bankedMoney", startingCapital);
     localStorage.removeItem("strategy");
     localStorage.removeItem("currentMoney");
     localStorage.removeItem("slotData"); // 他にも消すものがあれば追加
@@ -380,5 +249,3 @@ async function loadPriceData() {
 loadPriceData().then(() => {
   createGrid();
 });
-
-
