@@ -5,6 +5,7 @@ const GENERATE_EFFICIENCY = 0.9;
 const PRICE_DATA_URL = "data/spot_price_kansai_2024_2025.json";
 const KWH_PER_GWH = 1000000;
 const SLOT_HOURS = 0.5;
+const ymdStr = date.toISOString().slice(0, 10).replace(/-/g, "/");
 
 let strategy = Array(7).fill().map(() => Array(48).fill("idle"));
 let priceData = {};
