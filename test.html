@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>日付選択チャート - 単価と太陽光出力制御量</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f0f8ff; padding: 2rem; text-align: center; }
+    h1 { font-size: 1.5em; margin-bottom: 1em; }
+    .date-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5em;
+      margin-bottom: 1em;
+    }
+    input[type="date"] { font-size: 1em; padding: 0.3em; }
+    .chart-container {
+      width: 90%;
+      max-width: 1000px;
+      margin: 2em auto;
+    }
+    canvas {
+      width: 100%;
+    }
+    .main-chart { height: 400px; }
+    .sub-chart { margin-top: 3em; }
+    .controls {
+      margin-top: 1em;
+      display: flex;
+      justify-content: center;
+      gap: 0.5em;
+      flex-wrap: wrap;
+    }
+    #weatherSummary {
+      margin-top: 1em;
+      font-size: 0.95em;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.8em;
+    }
+    button {
+      font-size: 1em;
+      padding: 0.3em 1em;
+      margin: 0.2em;
+    }
+  </style>
+</head>
+<body>
+  <h1>関西スポット価格と太陽光出力制御量</h1>
+  <div class="date-row">
+    <button id="prevDay">← 前日</button>
+    <label for="datePicker">日付：</label>
+    <input type="date" id="datePicker" value="2025-04-01">
+    <button id="nextDay">翌日 →</button>
+  </div>
+
+  <div class="controls">
+    <button id="prevWeek">⇦ 前週</button>
+    <button id="weekView">📅 週間チャート</button>
+    <button id="dayView" style="display: none;">📆 1日のチャート</button>
+    <button id="nextWeek">翌週 ⇨</button>
+  </div>
+
+  <div class="chart-container">
+    <canvas id="chart" class="main-chart"></canvas>
+    <canvas id="chart2" class="sub-chart" height="150"></canvas>
+  </div>
+
+  <div id="weatherSummary"></div>
+
+  <a class="btn" href="index.html">戻る →</a>
+
+  <script>
+    let chart;
+    let chart2;
+    let lastMode = "day";
+
+    Promise.all([
+      fetch("data/spot_price_kansai_2024_2025.json").then(res => res.json()),
+      fetch("data/eria_jukyu_2025_full_final.json").then(res => res.json()),
+      fetch("data/combined_data.json").then(res => res.json())
+    ]).then(([priceData, solarControlData, weatherData]) => {
+      const datePicker = document.getElementById("datePicker");
+      const prevDayBtn = document.getElementById("prevDay");
+      const nextDayBtn = document.getElementById("nextDay");
+      const weekViewBtn = document.getElementById("weekView");
+      const dayViewBtn = document.getElementById("dayView");
+      const prevWeekBtn = document.getElementById("prevWeek");
+      const nextWeekBtn = document.getElementById("nextWeek");
+      const weatherSummary = document.getElementById("weatherSummary");
+
+      const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+
+      function updateButtonVisibility() {
+        const isWeek = lastMode === "week";
+        prevWeekBtn.style.display = isWeek ? "inline-block" : "none";
+        nextWeekBtn.style.display = isWeek ? "inline-block" : "none";
+        dayViewBtn.style.display = isWeek ? "inline-block" : "none";
+        weekViewBtn.style.display = isWeek ? "none" : "inline-block";
+      }
+
+      function renderWeather(dateStr, isWeek) {
+        weatherSummary.innerHTML = "";
+        const baseDate = new Date(dateStr);
+        const loopCount = isWeek ? 7 : 1;
+        for (let i = 0; i < loopCount; i++) {
+          const d = new Date(baseDate);
+          d.setDate(baseDate.getDate() + i);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          const key = `${yyyy}/${mm}/${dd}`;
+          const weather = weatherData[key];
+          if (weather) {
+            const span = document.createElement("span");
+            span.textContent = `${mm}/${dd} ${weather.icon} ${weather.temp.toFixed(1)}℃`;
+            weatherSummary.appendChild(span);
+          }
+        }
+      }
+
+      function renderChart(dateStr, isWeek = false) {
+        lastMode = isWeek ? "week" : "day";
+        updateButtonVisibility();
+        renderWeather(dateStr, isWeek);
+
+        // 高さリセット（再描画時）
+        const canvas2 = document.getElementById("chart2");
+        canvas2.height = 150;
+
+        if (chart) chart.destroy();
+        if (chart2) chart2.destroy();
+        const ctx1 = document.getElementById("chart").getContext("2d");
+        const ctx2 = canvas2.getContext("2d");
+
+        const labels = [];
+        const prices = [], controlValues = [], demands = [], solarActuals = [];
+
+        const baseDate = new Date(dateStr);
+        const loopCount = isWeek ? 7 : 1;
+
+        for (let i = 0; i < loopCount; i++) {
+          const d = new Date(baseDate);
+          d.setDate(baseDate.getDate() + i);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          const key = `${yyyy}/${mm}/${dd}`;
+          const priceDay = priceData[key];
+          const controlDay = solarControlData[key];
+          if (!priceDay || !controlDay) continue;
+
+          priceDay.forEach((p, idx) => {
+            labels.push(`${mm}/${dd} ${p.time}`);
+            prices.push(p.price);
+            controlValues.push(controlDay[idx]["太陽光出力制御量"]);
+            demands.push(controlDay[idx]["エリア需要"]);
+            solarActuals.push(controlDay[idx]["太陽光発電実績"]);
+          });
+        }
+
+        const sharedLayout = { padding: { left: 80, right: 80 } };
+        const sharedTicks = { callback: value => value.toLocaleString(), font: { size: 11 } };
+
+        chart = new Chart(ctx1, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              { label: "関西スポット価格 (円/kWh)", data: prices, borderColor: "blue", yAxisID: 'y', tension: 0.2 },
+              { label: "太陽光出力制御量 (MW)", data: controlValues, borderColor: "orange", yAxisID: 'y1', tension: 0.2 }
+            ]
+          },
+          options: {
+            responsive: true,
+            layout: sharedLayout,
+            interaction: { mode: 'index', intersect: false },
+            stacked: false,
+            scales: {
+              x: { title: { display: true, text: '時間' } },
+              y: { type: 'linear', position: 'left', title: { display: true, text: '価格 (円/kWh)' }, beginAtZero: true, ticks: sharedTicks },
+              y1: { type: 'linear', position: 'right', title: { display: true, text: '太陽光出力制御量 (MW)' }, beginAtZero: true, grid: { drawOnChartArea: false }, ticks: sharedTicks }
+            }
+          }
+        });
+
+        const maxDemand = Math.max(...demands);
+
+        chart2 = new Chart(ctx2, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              { label: "エリア需要 (GW)", data: demands.map(v => v / 1000), borderColor: "green", yAxisID: 'y', tension: 0.2 },
+              { label: "太陽光発電実績 (GW)", data: solarActuals.map(v => v / 1000), borderColor: "gold", yAxisID: 'y1', tension: 0.2 }
+            ]
+          },
+          options: {
+            responsive: true,
+            layout: sharedLayout,
+            interaction: { mode: 'index', intersect: false },
+            stacked: false,
+            scales: {
+              x: { display: false },
+              y: {
+                type: 'linear',
+                position: 'left',
+                title: { display: true, text: '需要・発電 (GW)' },
+                beginAtZero: true,
+                suggestedMax: maxDemand / 1000,
+                ticks: { stepSize: 0.1, callback: value => value.toFixed(1), font: { size: 11 } }
+              },
+              y1: {
+                type: 'linear',
+                position: 'right',
+                title: { display: true, text: '太陽光発電実績 (GW)' },
+                beginAtZero: true,
+                suggestedMax: maxDemand / 1000,
+                grid: { drawOnChartArea: false },
+                ticks: { stepSize: 0.1, callback: value => value.toFixed(1), font: { size: 11 } }
+              }
+            }
+          }
+        });
+      }
+
+      function changeDate(offset) {
+        const currentDate = new Date(datePicker.value);
+        currentDate.setDate(currentDate.getDate() + offset);
+        const yyyy = currentDate.getFullYear();
+        const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(currentDate.getDate()).padStart(2, '0');
+        const nextValue = `${yyyy}-${mm}-${dd}`;
+        datePicker.value = nextValue;
+        renderChart(nextValue, lastMode === "week");
+      }
+
+      datePicker.addEventListener("change", e => renderChart(e.target.value, lastMode === "week"));
+      prevDayBtn.addEventListener("click", () => changeDate(-1));
+      nextDayBtn.addEventListener("click", () => changeDate(1));
+      weekViewBtn.addEventListener("click", () => renderChart(datePicker.value, true));
+      dayViewBtn.addEventListener("click", () => renderChart(datePicker.value, false));
+      prevWeekBtn.addEventListener("click", () => changeDate(-7));
+      nextWeekBtn.addEventListener("click", () => changeDate(7));
+
+      renderChart(datePicker.value);
+    });
+  </script>
+</body>
+<footer style="margin-top: 2em; font-size: 0.9em; color: #555;">
+  <p><strong>びわ湖電池プロジェクト™</strong><br>出典：
+    <ul>
+      <li>電力スポット価格：<a href="https://www.jepx.jp/" target="_blank">JEPX（日本卸電力取引所）</a></li>
+      <li>太陽光制御量：関西エリア需給実績CSV（2025年）より生成</li>
+      <li>天気情報：気象庁公開データより</li>
+    </ul>
+  </p>
+</footer>
+</html>

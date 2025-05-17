@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>日付選択チャート - 単価と太陽光出力制御量</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f0f8ff; padding: 2rem; text-align: center; }
+    h1 { font-size: 1.5em; margin-bottom: 1em; }
+    input[type="date"] { font-size: 1em; padding: 0.3em; }
+    .chart-container {
+      width: 80%;
+      max-width: 900px;
+      margin: 2em auto;
+    }
+    canvas {
+      width: 100%;
+      height: 400px;
+    }
+    .controls {
+      margin-top: 1em;
+    }
+    button {
+      font-size: 1em;
+      padding: 0.3em 1em;
+      margin: 0 0.5em;
+    }
+  </style>
+</head>
+<body>
+  <h1>関西スポット価格と太陽光出力制御量</h1>
+  <label for="datePicker">日付を選んでください：</label>
+  <input type="date" id="datePicker" value="2025-04-01">
+
+  <div class="controls">
+    <button id="prevDay">← 前日</button>
+    <button id="nextDay">翌日 →</button>
+  </div>
+
+  <div class="chart-container">
+    <canvas id="chart"></canvas>
+  </div>
+  <a class="btn" href="index.html">戻る →</a>
+
+  <script>
+    let chart;
+
+    Promise.all([
+      fetch("data/spot_price_kansai_2024_2025.json").then(res => res.json()),
+      fetch("data/eria_jukyu_2025_full_final.json").then(res => res.json())
+    ]).then(([priceData, solarControlData]) => {
+      const datePicker = document.getElementById("datePicker");
+      const prevDayBtn = document.getElementById("prevDay");
+      const nextDayBtn = document.getElementById("nextDay");
+
+      function renderChart(dateStr) {
+        const dateKey = dateStr.replace(/-/g, "/");
+        const priceDay = priceData[dateKey];
+        const controlDay = solarControlData[dateKey];
+
+        if (!priceDay || !controlDay) {
+          alert("選択した日のデータが見つかりません。");
+          return;
+        }
+
+        const labels = priceDay.map(d => d.time);
+        const prices = priceDay.map(d => d.price);
+        const controlValues = controlDay.map(d => d["太陽光出力制御量"]);
+
+        if (chart) chart.destroy();
+        const ctx = document.getElementById("chart").getContext("2d");
+        chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "関西スポット価格 (円/kWh)",
+                data: prices,
+                borderColor: "blue",
+                yAxisID: 'y',
+                tension: 0.2
+              },
+              {
+                label: "太陽光出力制御量 (MW)",
+                data: controlValues,
+                borderColor: "orange",
+                yAxisID: 'y1',
+                tension: 0.2
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            interaction: {
+              mode: 'index',
+              intersect: false,
+            },
+            stacked: false,
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: '時間'
+                }
+              },
+              y: {
+                type: 'linear',
+                position: 'left',
+                title: {
+                  display: true,
+                  text: '価格 (円/kWh)'
+                },
+                beginAtZero: true
+              },
+              y1: {
+                type: 'linear',
+                position: 'right',
+                title: {
+                  display: true,
+                  text: '太陽光出力制御量 (MW)'
+                },
+                beginAtZero: true,
+                grid: {
+                  drawOnChartArea: false
+                }
+              }
+            }
+          }
+        });
+      }
+
+      function changeDate(offset) {
+        const currentDate = new Date(datePicker.value);
+        currentDate.setDate(currentDate.getDate() + offset);
+        const yyyy = currentDate.getFullYear();
+        const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(currentDate.getDate()).padStart(2, '0');
+        const nextValue = `${yyyy}-${mm}-${dd}`;
+        datePicker.value = nextValue;
+        renderChart(nextValue);
+      }
+
+      datePicker.addEventListener("change", e => renderChart(e.target.value));
+      prevDayBtn.addEventListener("click", () => changeDate(-1));
+      nextDayBtn.addEventListener("click", () => changeDate(1));
+
+      renderChart(datePicker.value);
+    });
+  </script>
+
+</body>
+<footer style="margin-top: 2em; font-size: 0.9em; color: #555;">
+  <p><strong>びわ湖電池プロジェクト™</strong><br>出典： <ul>
+    <li>電力スポット価格：<a href="https://www.jepx.jp/" target="_blank">JEPX（日本卸電力取引所）</a></li>
+    <li>太陽光制御量：<a href="#">関西エリア需給実績CSV（2025年）より生成</a></li>
+  </ul>
+</footer>
+</html>
