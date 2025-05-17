@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ダム位置エネルギー計算機</title>
+  <style>
+    body { font-family: sans-serif; line-height: 1.6; padding: 20px; }
+    input { width: 100px; margin: 5px; }
+    .output { font-weight: bold; margin-top: 10px; }
+.bar-container {
+    position: relative;
+    width: 80px;
+    height: 100px;
+    border: 1px solid #444;
+    background-color: #f0f0f0;
+    margin-bottom: 5px;
+  }
+.bar-value-label {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  font-size: 0.8em;
+  font-weight: bold;
+  color: #000;
+  top: 0;
+  pointer-events: none;
+}
+  .bar {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    transition: height 0.5s;
+  }
+
+  #lakeLevelBar {
+    background-color: #0277bd;
+  }
+
+  #energyLevelBar {
+    background-color: #e53935;
+  }
+
+  .bar-label {
+    text-align: center;
+    font-size: 0.9em;
+  }
+
+    #lakeLevelContainer {
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+      height: 100px;
+      background-color: #e0f7fa;
+      border: 1px solid #00838f;
+      margin-top: 20px;
+    }
+
+    #lakeLevelBar {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background-color: #0277bd;
+      height: 0;
+      transition: height 0.5s;
+    }
+
+    #lakeLevelLabel {
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>ダムの容積・位置エネルギー計算</h2>
+
+  <label>縦（m）：<input type="number" id="length" value="500" step="0.1"></label><br>
+  <label>横（m）：<input type="number" id="width" value="500" step="0.1"></label><br>
+  <label>深さ（m）：<input type="number" id="depth" value="78" step="0.1"></label><br>
+  <label>有効高さ（m）：<input type="number" id="effectiveHeight" value="300" step="0.1"></label><br>
+
+  <button onclick="calculate()">計算する</button>
+
+  <div class="output" id="volumeResult">容積（トン）：</div>
+  <div class="output" id="suiisaResult">びわ湖の水位変動（mm）：</div>
+  <div class="output" id="energyResult">位置エネルギー（GWh）：</div>
+
+<h3>視覚化：位置エネルギーと水位変動</h3>
+<!-- 水位バー -->
+<div style="display: flex; gap: 40px;">
+  <!-- 水位バー -->
+  <div>
+    <div class="bar-container">
+      <div id="lakeLevelBar" class="bar"></div>
+  <div id="lakeValueLabel" class="bar-value-label"></div>
+    </div>
+    <div class="bar-label">水位変動（mm）</div>
+  </div>
+
+
+<!-- エネルギーバー -->
+  <!-- エネルギーバー -->
+  <div>
+    <div class="bar-container">
+      <div id="energyLevelBar" class="bar"></div>
+  <div id="energyValueLabel" class="bar-value-label"></div>
+    </div>
+    <div class="bar-label">エネルギー（GWh）</div>
+  </div>
+</div>
+  <script>
+    function formatNumber(value, digits = 2) {
+      return value.toLocaleString(undefined, {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+      });
+    }
+
+    function calculate() {
+      const length = parseFloat(document.getElementById('length').value) || 0;
+      const width = parseFloat(document.getElementById('width').value) || 0;
+      const depth = parseFloat(document.getElementById('depth').value) || 0;
+      const height = parseFloat(document.getElementById('effectiveHeight').value) || 0;
+
+      const volume = length * width * depth; // m³
+      const massTons = volume; // 1m³ = 1トン
+      const energyJoules = massTons * 1000 * 9.8 * height;
+      const lakeArea = 670000000; // m²
+      const suiisa = (volume * 1000) / lakeArea; // mm
+      const energyGWh = energyJoules / 3.6e12;
+      const energyPS =     energyGWh /100.0;
+
+      document.getElementById('volumeResult').textContent =
+        "容積（トン）： " + formatNumber(massTons, 0) + " トン";
+      document.getElementById('energyResult').textContent =
+        "位置エネルギー（GWh）： " + formatNumber(energyGWh, 3) + " GWh";
+      document.getElementById('suiisaResult').textContent =
+        "びわ湖の水位変動（mm）： " + formatNumber(suiisa, 3) + " mm";
+
+      // 水面バーの高さ更新（最大100mmスケールに対して比率表示）
+      const maxMm = 100;
+      const heightPercent = Math.min(100, (suiisa / maxMm) * 100);
+      document.getElementById('lakeLevelBar').style.height = heightPercent + "%";
+      const enheightPercent = Math.min(100, (energyPS) * 100);
+      document.getElementById('energyLevelBar').style.height = enheightPercent + "%";
+	// 水位ラベル
+	document.getElementById('lakeValueLabel').textContent = formatNumber(suiisa, 1) + " mm";
+	// エネルギーラベル
+	document.getElementById('energyValueLabel').textContent = formatNumber(energyGWh, 2) + " GWh";
+    }
+  </script>
+</body>
+</html>
