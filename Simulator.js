@@ -196,46 +196,80 @@ document.getElementById("totalProfitDisplay").textContent =
   `資産：${Math.round(total).toLocaleString()} 円`;
 }
 
+// Simulator with unified chart
+//let profitChart;
 function showCharts(data, water) {
-  const ctx1 = document.getElementById("profitChart").getContext("2d");
-  const ctx2 = document.getElementById("waterChart").getContext("2d");
+  const ctx = document.getElementById("profitChart").getContext("2d");
   if (profitChart) profitChart.destroy();
-  if (waterChart) waterChart.destroy();
-  profitChart = new Chart(ctx1, {
+
+  profitChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: Array.from({ length: data.length }, (_, i) => i),
-      datasets: [{
-        label: '資産（万円）',
-        data,
-        borderColor: 'green',
-        tension: 0.1,
-        fill: false
-      }]
+      datasets: [
+        {
+          label: '資産（万円）',
+          data: data,
+          borderColor: 'green',
+          backgroundColor: 'rgba(0,0,0,0)',
+          yAxisID: 'y',
+          tension: 0.1,
+          fill: false,
+          borderWidth: 2
+        },
+        {
+          label: '上池水量（GWh）',
+          data: water,
+          borderColor: 'rgba(0, 150, 255, 0.5)',
+          backgroundColor: 'rgba(0, 150, 255, 0.2)',
+          yAxisID: 'y1',
+          type: 'line',
+          fill: 'origin',
+          tension: 0.2,
+          borderWidth: 1,
+          pointRadius: 0
+        },
+        {
+          label: '上池容量上限 (16GWh)',
+          data: Array(data.length).fill(16),
+          borderColor: 'red',
+          borderDash: [5, 5],
+          borderWidth: 1,
+          fill: false,
+          yAxisID: 'y1',
+          pointRadius: 0,
+          tension: 0
+        }
+      ]
     },
     options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        title: {
+          display: true,
+          text: '資産と上池水量の推移'
+        }
+      },
       scales: {
-        x: { title: { display: true, text: "時間スロット" } },
-        y: { title: { display: true, text: "累積資産 (万円)" } }
-      }
-    }
-  });
-  waterChart = new Chart(ctx2, {
-    type: 'line',
-    data: {
-      labels: Array.from({ length: water.length }, (_, i) => i),
-      datasets: [{
-        label: '上池水量（GWh）',
-        data: water,
-        borderColor: 'blue',
-        tension: 0.1,
-        fill: false
-      }]
-    },
-    options: {
-      scales: {
-        x: { title: { display: true, text: "時間スロット" } },
-        y: { title: { display: true, text: "水量 (GWh)" } }
+        x: {
+          title: { display: true, text: "時間スロット" },
+          ticks: { autoSkip: true, maxTicksLimit: 24 }
+        },
+        y: {
+          type: 'linear',
+          position: 'left',
+          title: { display: true, text: '累積資産 (万円)' },
+          beginAtZero: true
+        },
+        y1: {
+          type: 'linear',
+          position: 'right',
+          title: { display: true, text: '水量 (GWh)' },
+          beginAtZero: true,
+          grid: { drawOnChartArea: false },
+          suggestedMax: 17
+        }
       }
     }
   });
