@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>日付選択チャート - 単価と太陽光出力制御量</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <style>
     body { font-family: sans-serif; background: #f0f8ff; padding: 2rem; text-align: center; }
     h1 { font-size: 1.5em; margin-bottom: 1em; }
@@ -154,13 +155,35 @@
           if (!priceDay || !controlDay) continue;
 
           priceDay.forEach((p, idx) => {
-            labels.push(`${mm}/${dd} ${p.time}`);
+            const label = `${mm}/${dd} ${p.time}`;
+            labels.push(label);
             prices.push(p.price);
             controlValues.push(controlDay[idx]["太陽光出力制御量"]);
             demands.push(controlDay[idx]["エリア需要"]);
             solarActuals.push(controlDay[idx]["太陽光発電実績"]);
           });
         }
+
+        const noonAnnotations = labels.map((label, i) => {
+          if (label.includes("12:00")) {
+            return {
+              type: 'line',
+              scaleID: 'x',
+              value: label,
+              borderColor: 'red',
+              borderWidth: 1,
+              borderDash: [6, 6],
+              label: {
+                content: '☼',
+                enabled: true,
+                position: 'start',
+                backgroundColor: 'transparent',
+                color: 'red',
+                font: { style: 'bold' }
+              }
+            };
+          }
+        }).filter(Boolean);
 
         const sharedLayout = { padding: { left: 80, right: 80 } };
         const sharedTicks = { callback: value => value.toLocaleString(), font: { size: 11 } };
@@ -179,6 +202,11 @@
             layout: sharedLayout,
             interaction: { mode: 'index', intersect: false },
             stacked: false,
+            plugins: {
+              annotation: {
+                annotations: noonAnnotations
+              }
+            },
             scales: {
               x: { title: { display: true, text: '時間' } },
               y: { type: 'linear', position: 'left', title: { display: true, text: '価格 (円/kWh)' }, beginAtZero: true, ticks: sharedTicks },
@@ -250,10 +278,6 @@
       renderChart(datePicker.value);
     });
   </script>
-<br><button onclick="window.open('biwako_denchi_week_chart_manual.pdf', '_blank')">
-  📘 使い方マニュアルを見る
-</button>
-
 </body>
 <footer style="margin-top: 2em; font-size: 0.9em; color: #555;">
   <p><strong>びわ湖電池プロジェクト™</strong><br>出典：
